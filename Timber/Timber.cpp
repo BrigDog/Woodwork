@@ -4,6 +4,8 @@
 #include <SFML/Audio.hpp>
 #include <iostream>
 #include <list>
+#include<string>  
+#include<cmath>
 //Make code easier to write with "using namespace"
 using namespace sf;
 
@@ -53,6 +55,11 @@ struct numberData
     std::list<Sprite> digitSprites;
 };
 
+sf::Vector2f round(const sf::Vector2f vector)
+{
+    return sf::Vector2f{ std::round(vector.x), std::round(vector.y) };
+}
+
 //This is where the game starts from.
 int main()
 {
@@ -77,8 +84,22 @@ int main()
     bool paused = true;
 
     int counter = 0;
+    int score = 0;
 
     float playerTime = 0;
+
+    //Making text and loading font.
+    sf::Font font;
+    font.loadFromFile("fonts/space-harrier-extended.ttf");
+    sf::Text scoreText;
+    scoreText.setFont(font);
+    scoreText.setPosition(116, 0);
+    scoreText.setLetterSpacing(0);
+    scoreText.setLineSpacing(0);
+    scoreText.setCharacterSize(80);
+    scoreText.setScale(0.1f, 0.1f);
+    scoreText.setFillColor(sf::Color::Black);
+    scoreText.setString(std::to_string(score));
 
     //Create a video mode object.
     VideoMode vm(240, 160);
@@ -315,6 +336,16 @@ int main()
                             counter = 4;
                         }
                     }
+                    score++;
+                    scoreText.setString(std::to_string(score));
+                    if (score >= 100)
+                    {
+                        scoreText.setPosition(108, 0);
+                    }
+                    else if(score >= 10)
+                    {
+                        scoreText.setPosition(112, 0);
+                    }
                     treeMoveOnce = 2;
                 }
                 counter = 0;
@@ -380,6 +411,7 @@ int main()
         {
             window.draw(spriteGravestone);
         }
+        window.draw(scoreText);
         
 
         //Show everything that has been drawn.
