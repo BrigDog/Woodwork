@@ -16,6 +16,7 @@ int treeMoveOnce = 0;
 bool playerPos = false;
 int branchSpawnPos = 0;
 bool spawnAnotherBranch = true;
+bool reset = true;
 
 //All my data on logs applied here and called as an instance.
 struct logData
@@ -87,6 +88,7 @@ int main()
     int score = 0;
 
     float playerTime = 0;
+    float waitTime = 0;
 
     //Making text and loading font.
     sf::Font font;
@@ -271,6 +273,27 @@ int main()
                 std::cout << branchD.branchSprites[0].getPosition().y;
             }
         }
+        
+        if (Keyboard::isKeyPressed(Keyboard::R)&& reset == true)
+        {
+            reset = false;
+            playerIsDead = false;
+            playerHit = false;
+            paused = true;
+            counter = 0;
+            score = 0;
+            scoreText.setString(std::to_string(score));
+            scoreText.setPosition(116, 0);
+            playerTime = 0;
+            treeMove = false;
+            treeMoveOnce = 0;
+            branchSpawnPos = 0;
+            spawnAnotherBranch = true;
+            for (counter = 0; counter < 4; counter++)
+            {
+                spawnBranch(branchD.branchSprites[counter], true, branchD.branchFalls[counter]);
+            }
+        }
 
         //Start the game
         if (Keyboard::isKeyPressed(Keyboard::Escape)) 
@@ -280,6 +303,15 @@ int main()
         }
 
         //Update the scene.
+        if (reset == false)
+        {
+            waitTime += dt.asSeconds();
+            if (waitTime >= 5)
+            {
+                reset = true;
+                waitTime = 0.0f;
+            }
+        }
         if (!paused)
         {
             //Measure time from each frame.
@@ -484,6 +516,8 @@ void spawnBranch(Sprite& part, bool firstTime, bool& whichBranch)
     int randomiser;
     if (firstTime == true)
     {
+        part.setRotation(0);
+        whichBranch = false;
         randomiser = rand() % 10 + 1;
         if (randomiser > 1)
         {
