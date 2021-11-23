@@ -8,7 +8,6 @@
 #include<cmath>
 //Make code easier to write with "using namespace"
 using namespace sf;
-
 //Time variable
 Time dt;
 bool treeMove = false;
@@ -86,6 +85,7 @@ int main()
 
     int counter = 0;
     int score = 0;
+    int characterPicker = 0;
 
     float playerTime = 0;
     float waitTime = 0;
@@ -293,6 +293,31 @@ int main()
             {
                 spawnBranch(branchD.branchSprites[counter], true, branchD.branchFalls[counter]);
             }
+        }
+        if (Keyboard::isKeyPressed(Keyboard::C) && reset == true)
+        {
+            //Make a timer so player can't spam.
+            reset = false;
+            //Pick which character.
+            characterPicker++;
+            if (characterPicker >= 2)
+            {
+                characterPicker = 0;
+            }
+            //Change character textures.
+            if (characterPicker == 0)
+            {
+                playerD.playerTextures[0].loadFromFile("graphics/defaultPlayer1.png");
+                playerD.playerTextures[1].loadFromFile("graphics/defaultPlayer2.png");
+                playerD.playerTextures[2].loadFromFile("graphics/defaultPlayer3.png");
+            } else if (characterPicker == 1)
+            {
+                playerD.playerTextures[0].loadFromFile("graphics/winterPlayer1.png");
+                playerD.playerTextures[1].loadFromFile("graphics/winterPlayer2.png");
+                playerD.playerTextures[2].loadFromFile("graphics/winterPlayer3.png");
+            }
+            //reset the player sprite;
+            playerD.playerSprite.setTexture(playerD.playerTextures[1]);
         }
 
         //Start the game
