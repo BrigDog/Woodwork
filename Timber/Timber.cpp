@@ -1,11 +1,12 @@
 //Include libaries here.
+#include <fstream>
 #include <sstream>
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <iostream>
 #include <list>
-#include<string>  
-#include<cmath>
+#include <string>  
+#include <cmath>
 //Make code easier to write with "using namespace"
 using namespace sf;
 //Time variable
@@ -16,6 +17,7 @@ bool playerPos = false;
 int branchSpawnPos = 0;
 bool spawnAnotherBranch = true;
 bool reset = true;
+std::string line;
 
 //All my data on logs applied here and called as an instance.
 struct logData
@@ -77,6 +79,8 @@ int main()
     void treeMovement(struct logData&, struct branchData, bool&);
     void birdMovement(bool&, int&, Sprite&, IntRect&, float&);
 
+    std::fstream myfile;
+
     Clock clock;
 
     bool playerIsDead = false;
@@ -86,6 +90,7 @@ int main()
     int counter = 0;
     int score = 0;
     int characterPicker = 0;
+    int highScore = 0;
 
     float playerTime = 0;
     float waitTime = 0;
@@ -238,6 +243,12 @@ int main()
         {
             window.close();
         }
+        if (Keyboard::isKeyPressed(Keyboard::S))
+        {
+            myfile.open("highscore.txt");
+            myfile << score;
+            myfile.close();
+        }
 
         if (!paused && playerIsDead == false)
         {
@@ -261,11 +272,6 @@ int main()
                 playerD.playerSprite.setPosition(65, 100);
                 playerD.playerSprite.setScale(1, 1);
                 spriteGravestone.setPosition(73, 121);
-            }
-
-            if (Keyboard::isKeyPressed(Keyboard::S))
-            {
-                playerIsDead = true;
             }
 
             if (Keyboard::isKeyPressed(Keyboard::X))
@@ -317,11 +323,11 @@ int main()
                 playerD.playerTextures[2].loadFromFile("graphics/winterPlayer3.png");
             }
             //reset the player sprite;
-            playerD.playerSprite.setTexture(playerD.playerTextures[1]);
+            playerD.playerSprite.setTexture(playerD.playerTextures[0]);
         }
 
         //Start the game
-        if (Keyboard::isKeyPressed(Keyboard::Escape)) 
+        if (Keyboard::isKeyPressed(Keyboard::Escape))
         {
             dt = clock.restart();
             paused = !paused;
@@ -331,7 +337,7 @@ int main()
         if (reset == false)
         {
             waitTime += dt.asSeconds();
-            if (waitTime >= 5)
+            if (waitTime >= 1)
             {
                 reset = true;
                 waitTime = 0.0f;

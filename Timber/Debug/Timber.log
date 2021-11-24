@@ -1,26 +1,26 @@
 ﻿  Timber.cpp
-C:\Users\Joshu\OneDrive\Documents\Projects\Timber\Timber\Timber.cpp(119,55): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Joshu\OneDrive\Documents\Projects\Timber\Timber\Timber.cpp(382,91): warning C4244: '=': conversion from 'T' to 'int', possible loss of data
+C:\Users\Joshu\OneDrive\Documents\Projects\Timber\Timber\Timber.cpp(123,55): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\Joshu\OneDrive\Documents\Projects\Timber\Timber\Timber.cpp(387,91): warning C4244: '=': conversion from 'T' to 'int', possible loss of data
           with
           [
               T=float
           ]
-C:\Users\Joshu\OneDrive\Documents\Projects\Timber\Timber\Timber.cpp(387,103): warning C4244: '=': conversion from 'T' to 'int', possible loss of data
+C:\Users\Joshu\OneDrive\Documents\Projects\Timber\Timber\Timber.cpp(392,103): warning C4244: '=': conversion from 'T' to 'int', possible loss of data
           with
           [
               T=float
           ]
-C:\Users\Joshu\OneDrive\Documents\Projects\Timber\Timber\Timber.cpp(525,31): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Joshu\OneDrive\Documents\Projects\Timber\Timber\Timber.cpp(550,38): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Joshu\OneDrive\Documents\Projects\Timber\Timber\Timber.cpp(618,54): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-C:\Users\Joshu\OneDrive\Documents\Projects\Timber\Timber\Timber.cpp(620,26): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\Joshu\OneDrive\Documents\Projects\Timber\Timber\Timber.cpp(644,22): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\Joshu\OneDrive\Documents\Projects\Timber\Timber\Timber.cpp(698,83): warning C4244: '=': conversion from 'T' to 'int', possible loss of data
+C:\Users\Joshu\OneDrive\Documents\Projects\Timber\Timber\Timber.cpp(530,31): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\Joshu\OneDrive\Documents\Projects\Timber\Timber\Timber.cpp(555,38): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\Joshu\OneDrive\Documents\Projects\Timber\Timber\Timber.cpp(623,54): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+C:\Users\Joshu\OneDrive\Documents\Projects\Timber\Timber\Timber.cpp(625,26): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Joshu\OneDrive\Documents\Projects\Timber\Timber\Timber.cpp(649,22): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Joshu\OneDrive\Documents\Projects\Timber\Timber\Timber.cpp(703,83): warning C4244: '=': conversion from 'T' to 'int', possible loss of data
           with
           [
               T=float
           ]
-C:\Users\Joshu\OneDrive\Documents\Projects\Timber\Timber\Timber.cpp(703,95): warning C4244: '=': conversion from 'T' to 'int', possible loss of data
+C:\Users\Joshu\OneDrive\Documents\Projects\Timber\Timber\Timber.cpp(708,95): warning C4244: '=': conversion from 'T' to 'int', possible loss of data
           with
           [
               T=float
