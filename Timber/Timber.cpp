@@ -18,6 +18,7 @@ int branchSpawnPos = 0;
 bool spawnAnotherBranch = true;
 bool reset = true;
 std::string line;
+int globalHighScore;
 
 //All my data on logs applied here and called as an instance.
 struct logData
@@ -78,6 +79,7 @@ int main()
     void cloudMovement(cloudData&);
     void treeMovement(struct logData&, struct branchData, bool&);
     void birdMovement(bool&, int&, Sprite&, IntRect&, float&);
+    void highScore(int, std::fstream&);
 
     std::fstream myfile;
 
@@ -90,10 +92,11 @@ int main()
     int counter = 0;
     int score = 0;
     int characterPicker = 0;
-    int highScore = 0;
 
     float playerTime = 0;
     float waitTime = 0;
+
+    highScore(score, myfile);
 
     //Making text and loading font.
     sf::Font font;
@@ -107,6 +110,16 @@ int main()
     scoreText.setScale(0.1f, 0.1f);
     scoreText.setFillColor(sf::Color::Black);
     scoreText.setString(std::to_string(score));
+
+    sf::Text highScoreText;
+    highScoreText.setFont(font);
+    highScoreText.setPosition(0, 0);
+    highScoreText.setLetterSpacing(0);
+    highScoreText.setLineSpacing(0);
+    highScoreText.setCharacterSize(80);
+    highScoreText.setScale(0.1f, 0.1f);
+    highScoreText.setFillColor(sf::Color::Black);
+    highScoreText.setString(std::to_string(globalHighScore));
 
     //Create a video mode object.
     VideoMode vm(240, 160);
@@ -234,6 +247,7 @@ int main()
         while (window.pollEvent(_event)) 
         {
             if (_event.type == sf::Event::Closed) {
+                highScore(score, myfile);
                 window.close();
             }
         }
@@ -241,13 +255,12 @@ int main()
         //Handle the player input.
         if (Keyboard::isKeyPressed(Keyboard::Q)) 
         {
+            highScore(score, myfile);
             window.close();
         }
         if (Keyboard::isKeyPressed(Keyboard::S))
         {
-            myfile.open("highscore.txt");
-            myfile << score;
-            myfile.close();
+            highScore(score, myfile);
         }
 
         if (!paused && playerIsDead == false)
@@ -283,6 +296,7 @@ int main()
         if (Keyboard::isKeyPressed(Keyboard::R)&& reset == true)
         {
             reset = false;
+            highScore(score, myfile);
             playerIsDead = false;
             playerHit = false;
             paused = true;
@@ -298,6 +312,13 @@ int main()
             for (counter = 0; counter < 4; counter++)
             {
                 spawnBranch(branchD.branchSprites[counter], true, branchD.branchFalls[counter]);
+            }
+            counter = 0;
+            while (counter < 9)
+            {
+                logD.logSprites[counter].setTexture(logD.logTexture);
+                logD.logSprites[counter].setPosition(103, 111 - (18 * counter));
+                counter++;
             }
         }
         if (Keyboard::isKeyPressed(Keyboard::C) && reset == true)
@@ -475,7 +496,8 @@ int main()
             window.draw(spriteGravestone);
         }
         window.draw(scoreText);
-        
+        highScoreText.setString(std::to_string(globalHighScore));
+        window.draw(highScoreText);
 
         //Show everything that has been drawn.
         window.display();
@@ -740,5 +762,34 @@ void treeMovement(struct logData& logD, struct branchData branchD, bool& playerI
                 branchD.branchFalls[counter]);
         }
         collisionCheck(branchD.branchSprites[counter], playerIsDead);
+    }
+}
+void highScore(int score, std::fstream& myfile)
+{
+    int currentHighScore;
+    std::string highScoreString;
+    bool scoreHigher;
+
+    myfile.open("highscore.txt");
+    getline(myfile, highScoreString);
+    myfile.close();
+
+    currentHighScore = stoi(highScoreString);
+    globalHighScore = currentHighScore;
+    if(currentHighScore>score)
+    {
+        scoreHigher = false;
+    }
+    else
+    {
+        scoreHigher = true;
+    }
+
+    if(scoreHigher == true)
+    {
+        myfile.open("highscore.txt");
+        myfile << score;
+        myfile.close();
+        globalHighScore = score;
     }
 }
