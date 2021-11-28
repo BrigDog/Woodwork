@@ -58,6 +58,14 @@ struct numberData
     std::list<Sprite> digitSprites;
 };
 
+struct timeBarData
+{
+    Texture backBarTextures[5];
+    Texture frontBarTexture;
+    Sprite backBarSprite;
+    float timeLeft;
+};
+
 sf::Vector2f round(const sf::Vector2f vector)
 {
     return sf::Vector2f{ std::round(vector.x), std::round(vector.y) };
@@ -71,6 +79,7 @@ int main()
     struct branchData branchD;
     struct cloudData cloudD;
     struct playerData playerD;
+    struct timeBarData timeBarD;
 
     void moveTreeTrunk(Sprite&, int);
     void spawnBranch(Sprite&, bool, bool&);
@@ -174,7 +183,7 @@ int main()
     playerD.playerSprite.setTexture(playerD.playerTextures[0]);
     playerD.playerSprite.setPosition(65, 100);
 
-    //Create a bird sprite
+    //Create a bird sprite.
     Texture birdTexture;
     birdTexture.loadFromFile("graphics/birdSpritesheet.png");
     sf::IntRect birdSpriteRect(0, 0, 10, 14);
@@ -183,6 +192,19 @@ int main()
     bool birdActive = false;
     int birdSpeed = 5;
     float birdTimer = 0;
+
+    //Create a time bar.
+    timeBarD.backBarTextures[0].loadFromFile("graphics/healthOutline1.png");
+    timeBarD.backBarTextures[1].loadFromFile("graphics/healthOutline2.png");
+    timeBarD.backBarTextures[2].loadFromFile("graphics/healthOutline3.png");
+    timeBarD.backBarTextures[3].loadFromFile("graphics/healthOutline4.png");
+    timeBarD.backBarTextures[4].loadFromFile("graphics/healthOutline5.png");
+    timeBarD.frontBarTexture.loadFromFile("graphics/redHealth.png");
+    timeBarD.backBarSprite.setTexture(timeBarD.backBarTextures[0]);
+    sf::IntRect timeBarSpriteRect(0, 0, 148, 8);
+    sf::Sprite timeBarSprite(timeBarD.frontBarTexture, timeBarSpriteRect);
+    timeBarD.backBarSprite.setPosition(45, 145);
+    timeBarSprite.setPosition(46, 146);
 
     //Make a chop sound.
     sf::SoundBuffer chop;
@@ -498,6 +520,8 @@ int main()
         window.draw(scoreText);
         highScoreText.setString(std::to_string(globalHighScore));
         window.draw(highScoreText);
+        window.draw(timeBarD.backBarSprite);
+        window.draw(timeBarSprite);
 
         //Show everything that has been drawn.
         window.display();
