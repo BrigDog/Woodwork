@@ -97,12 +97,16 @@ int main()
     bool playerIsDead = false;
     bool playerHit = false;
     bool paused = true;
+    bool scoreAnimation = false;
 
     int counter = 0;
     int score = 0;
     int characterPicker = 0;
 
+    float maxTime = 1;
+    float timeLeft = maxTime;
     float playerTime = 0;
+    float scoreAnimationTime = 0;
     float waitTime = 0;
 
     highScore(score, myfile);
@@ -112,7 +116,7 @@ int main()
     font.loadFromFile("fonts/space-harrier-extended.ttf");
     sf::Text scoreText;
     scoreText.setFont(font);
-    scoreText.setPosition(116, 0);
+    scoreText.setPosition(116, 5);
     scoreText.setLetterSpacing(0);
     scoreText.setLineSpacing(0);
     scoreText.setCharacterSize(80);
@@ -122,7 +126,7 @@ int main()
 
     sf::Text highScoreText;
     highScoreText.setFont(font);
-    highScoreText.setPosition(0, 0);
+    highScoreText.setPosition(5, 5);
     highScoreText.setLetterSpacing(0);
     highScoreText.setLineSpacing(0);
     highScoreText.setCharacterSize(80);
@@ -324,8 +328,9 @@ int main()
             paused = true;
             counter = 0;
             score = 0;
+            timeLeft = maxTime;
             scoreText.setString(std::to_string(score));
-            scoreText.setPosition(116, 0);
+            scoreText.setPosition(116, 5);
             playerTime = 0;
             treeMove = false;
             treeMoveOnce = 0;
@@ -394,6 +399,7 @@ int main()
             //Manage the player.
             if (playerHit == true) 
             {
+                timeLeft += 0.0022f;
                 playerTime += dt.asSeconds();
                 if (playerTime > 0.3)
                 {
@@ -419,6 +425,60 @@ int main()
                     playerD.playerSprite.setTexture(playerD.playerTextures[1]);
                 }
             }
+
+            if(score % 100 == 0 && !score == 0)
+            {
+                scoreAnimation = true;
+            }
+            if(scoreAnimation == true)
+            {
+                scoreAnimationTime += dt.asSeconds();
+                if (scoreAnimationTime > 0.35)
+                {
+                    timeBarD.backBarSprite.setTexture(timeBarD.backBarTextures[0]);
+                    scoreAnimation = false;
+                }
+                else if (scoreAnimationTime > 0.3)
+                {
+                    timeBarD.backBarSprite.setTexture(timeBarD.backBarTextures[1]);
+                }
+                else if (scoreAnimationTime > 0.25)
+                {
+                    timeBarD.backBarSprite.setTexture(timeBarD.backBarTextures[2]);
+                }
+                else if (scoreAnimationTime > 0.2)
+                {
+                    timeBarD.backBarSprite.setTexture(timeBarD.backBarTextures[3]);
+                }
+                else if (scoreAnimationTime > 0.15)
+                {
+                    timeBarD.backBarSprite.setTexture(timeBarD.backBarTextures[4]);
+                }
+                else if (scoreAnimationTime > 0.1)
+                {
+                    timeBarD.backBarSprite.setTexture(timeBarD.backBarTextures[3]);
+                }
+                else if (scoreAnimationTime > 0.05)
+                {
+                    timeBarD.backBarSprite.setTexture(timeBarD.backBarTextures[2]);
+                }
+                else
+                {
+                    timeBarD.backBarSprite.setTexture(timeBarD.backBarTextures[1]);
+                }
+            }
+
+            //Manage the time left bar.
+            timeLeft -= dt.asSeconds();
+            if (timeLeft <= 0)
+            {
+                timeLeft = 0;
+            }
+            if (timeLeft >= maxTime)
+            {
+                timeLeft = maxTime;
+            }
+
             //Manage the tree
             if (treeMove == true)
             {
@@ -446,11 +506,11 @@ int main()
                     scoreText.setString(std::to_string(score));
                     if (score >= 100)
                     {
-                        scoreText.setPosition(108, 0);
+                        scoreText.setPosition(108, 5);
                     }
                     else if(score >= 10)
                     {
-                        scoreText.setPosition(112, 0);
+                        scoreText.setPosition(112, 5);
                     }
                     treeMoveOnce = 2;
                 }
@@ -484,6 +544,8 @@ int main()
             birdTimer += dt.asSeconds();
             birdMovement(birdActive, birdSpeed, birdSprite, birdSpriteRect, birdTimer);
         }
+        float moveTimeBar = fabsf((timeLeft / maxTime) - 1);
+        sf::IntRect updatedTimeBarSpriteRect(0 + (moveTimeBar * 148), 0, 148, 8);
 
         //Clear everything from the last frame.
         window.clear();
@@ -521,6 +583,7 @@ int main()
         highScoreText.setString(std::to_string(globalHighScore));
         window.draw(highScoreText);
         window.draw(timeBarD.backBarSprite);
+        timeBarSprite.setTextureRect(updatedTimeBarSpriteRect);
         window.draw(timeBarSprite);
 
         //Show everything that has been drawn.
