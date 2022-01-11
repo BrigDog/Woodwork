@@ -83,8 +83,13 @@ int main()
     struct logData logD;
     struct branchData branchD;
     struct cloudData cloudD;
+    struct cloudData menuCloudD;
     struct playerData playerD;
+    struct playerData menuPlayerD;
     struct timeBarData timeBarD;
+
+    void cloudMovement(cloudData&);
+    void birdMovement(bool&, int&, Sprite&, IntRect&, float&);
 
     Clock clock;
 
@@ -97,13 +102,21 @@ int main()
         if (gameState == "Menu")
         {
             int selectPosition = 50;
+            int counter = 0;
             float resetTime = 0;
 
             //Make a background.
                 //Create a texture to hold a graphic on the GPU.
             Texture textureBackground;
             //Load a graphic into the texture.
-            textureBackground.loadFromFile("graphics/background2.png");
+            if (mapPicker == 0)
+            {
+                textureBackground.loadFromFile("graphics/background.png");
+            }
+            else
+            {
+                textureBackground.loadFromFile("graphics/background2.png");
+            }
             //Create a sprite
             Sprite spriteBackground;
             //Attach the texture to the sprite.
@@ -115,7 +128,14 @@ int main()
             //Create a texture to hold a graphic on the GPU.
             Texture textureMidground;
             //Load a graphic into the texture.
-            textureMidground.loadFromFile("graphics/midground2.png");
+            if (mapPicker == 0)
+            {
+                textureMidground.loadFromFile("graphics/midground.png");
+            }
+            else
+            {
+                textureMidground.loadFromFile("graphics/midground2.png");
+            }
             //Create a sprite
             Sprite spriteMidground;
             //Attach the texture to the sprite.
@@ -134,6 +154,38 @@ int main()
             spriteMenuSelect.setTexture(textureMenuSelect);
             //Set the position of the sprite.
             spriteMenuSelect.setPosition(0, 70);
+
+            //Create a bird sprite.
+            Texture menuBirdTexture;
+            menuBirdTexture.loadFromFile("graphics/birdSpritesheet.png");
+            sf::IntRect menuBirdSpriteRect(0, 0, 10, 14);
+            sf::Sprite menuBirdSprite(menuBirdTexture, menuBirdSpriteRect);
+            menuBirdSprite.setPosition(240, 0);
+            bool menuBirdActive = false;
+            int menuBirdSpeed = 5;
+            float menuBirdTimer = 0;
+            std::cout << "Here";
+            //Create a cloud sprite.
+            for (counter = 0; counter < 3; counter++)
+            {
+                switch (counter) {
+                case 0:
+                    menuCloudD.cloudTextures[counter].loadFromFile("graphics/randomCloud1.png");
+                    break;
+                case 1:
+                    menuCloudD.cloudTextures[counter].loadFromFile("graphics/randomCloud2.png");
+                    break;
+                case 2:
+                    menuCloudD.cloudTextures[counter].loadFromFile("graphics/randomCloud3.png");
+                    break;
+                }
+                menuCloudD.cloudSprites[counter].setTexture(menuCloudD.cloudTextures[counter]);
+                branchD.branchFalls[counter] = false;
+                bool cloud1Active = true;
+                menuCloudD.cloudActive[counter] = false;
+                menuCloudD.cloudSprites[counter].setPosition(-74, 0);
+            }
+            counter = 0;
 
             sf::Font font;
             font.loadFromFile("fonts/space-harrier-extended.ttf");
@@ -177,9 +229,15 @@ int main()
             quit.setFillColor(sf::Color::Black);
             quit.setString("QUIT");
 
-            playerD.playerTextures[0].loadFromFile("graphics/defaultPlayer1.png");
-            playerD.playerSprite.setTexture(playerD.playerTextures[0]);
-            playerD.playerSprite.setPosition(65, 100);
+            if (characterPicker == 0) 
+            {
+                menuPlayerD.playerTextures[0].loadFromFile("graphics/defaultPlayer1.png");
+            } else
+            {
+                menuPlayerD.playerTextures[0].loadFromFile("graphics/winterPlayer1.png");
+            }
+            menuPlayerD.playerSprite.setTexture(menuPlayerD.playerTextures[0]);
+            menuPlayerD.playerSprite.setPosition(30, 100);
 
             while (window.isOpen() & gameState == "Menu")
             {
@@ -193,18 +251,23 @@ int main()
                 }
                 if (Keyboard::isKeyPressed(Keyboard::Enter))
                 {
-                    if (selectPosition == 50)
+                    if (reset == true)
                     {
-                        gameState = "Game";
-                        window.clear();
-                    }
-                    if (selectPosition == 70)
-                    {
-
-                    }
-                    if (selectPosition == 90)
-                    {
-                        window.close();
+                        reset = false;
+                        if (selectPosition == 50)
+                        {
+                            gameState = "Game";
+                            window.clear();
+                        }
+                        if (selectPosition == 70)
+                        {
+                            gameState = "Custom";
+                            window.clear();
+                        }
+                        if (selectPosition == 90)
+                        {
+                            window.close();
+                        }
                     }
                 }
                 if (Keyboard::isKeyPressed(Keyboard::Down) || Keyboard::isKeyPressed(Keyboard::S))
@@ -226,7 +289,7 @@ int main()
                 if (reset == false)
                 {
                     resetTime += dt.asSeconds();
-                    if (resetTime >= 0.1f)
+                    if (resetTime >= 0.15f)
                     {
                         reset = true;
                         resetTime = 0.0f;
@@ -240,13 +303,29 @@ int main()
                 {
                     selectPosition = 90;
                 }
+                //Manage the clouds / Snow
+                if (mapPicker == 0)
+                {
+                    menuBirdTimer += dt.asSeconds();
+                    birdMovement(menuBirdActive, menuBirdSpeed, menuBirdSprite, menuBirdSpriteRect, menuBirdTimer);
+                }
+                cloudMovement(menuCloudD);
                 spriteMenuSelect.setPosition(0, selectPosition);
                 //Clear everything from the last frame.
                 window.clear();
 
                 window.draw(spriteBackground);
+                for (counter = 0; counter < 3; counter++)
+                {
+                    window.draw(menuCloudD.cloudSprites[counter]);
+                }
+                if(mapPicker == 0)
+                {
+                    menuBirdSprite.setTextureRect(menuBirdSpriteRect);
+                    window.draw(menuBirdSprite);
+                }
                 window.draw(spriteMidground);
-                window.draw(playerD.playerSprite);
+                window.draw(menuPlayerD.playerSprite);
                 window.draw(title);
                 window.draw(spriteMenuSelect);
                 window.draw(play);
@@ -264,9 +343,7 @@ int main()
             void spawnBranch(Sprite&, bool, bool&);
             void moveTreeBranch(Sprite&, int, bool&);
             void collisionCheck(Sprite&, bool&);
-            void cloudMovement(cloudData&);
             void treeMovement(struct logData&, struct branchData, bool&);
-            void birdMovement(bool&, int&, Sprite&, IntRect&, float&);
             void highScore(int, std::fstream&);
 
             std::fstream myfile;
@@ -352,9 +429,18 @@ int main()
             }
 
             //Create a player sprite.
-            playerD.playerTextures[0].loadFromFile("graphics/defaultPlayer1.png");
-            playerD.playerTextures[1].loadFromFile("graphics/defaultPlayer2.png");
-            playerD.playerTextures[2].loadFromFile("graphics/defaultPlayer3.png");
+            if (characterPicker == 0)
+            {
+                playerD.playerTextures[0].loadFromFile("graphics/defaultPlayer1.png");
+                playerD.playerTextures[1].loadFromFile("graphics/defaultPlayer2.png");
+                playerD.playerTextures[2].loadFromFile("graphics/defaultPlayer3.png");
+            }
+            else if (characterPicker == 1)
+            {
+                playerD.playerTextures[0].loadFromFile("graphics/winterPlayer1.png");
+                playerD.playerTextures[1].loadFromFile("graphics/winterPlayer2.png");
+                playerD.playerTextures[2].loadFromFile("graphics/winterPlayer3.png");
+            }
             playerD.playerSprite.setTexture(playerD.playerTextures[0]);
             playerD.playerSprite.setPosition(65, 100);
 
@@ -399,7 +485,14 @@ int main()
             //Create a texture to hold a graphic on the GPU.
             Texture textureBackground;
             //Load a graphic into the texture.
-            textureBackground.loadFromFile("graphics/background.png");
+            if (mapPicker == 0)
+            {
+                textureBackground.loadFromFile("graphics/background.png");
+            }
+            else
+            {
+                textureBackground.loadFromFile("graphics/background2.png");
+            }
             //Create a sprite
             Sprite spriteBackground;
             //Attach the texture to the sprite.
@@ -423,7 +516,14 @@ int main()
             //Create a texture to hold a graphic on the GPU.
             Texture textureMidground;
             //Load a graphic into the texture.
-            textureMidground.loadFromFile("graphics/midground.png");
+            if (mapPicker == 0)
+            {
+                textureMidground.loadFromFile("graphics/midground.png");
+            }
+            else
+            {
+                textureMidground.loadFromFile("graphics/midground2.png");
+            }
             //Create a sprite
             Sprite spriteMidground;
             //Attach the texture to the sprite.
@@ -443,6 +543,18 @@ int main()
             //Set the position of the sprite.
             spriteGravestone.setPosition(73, 121);
 
+            for (counter = 0; counter < 4; counter++)
+            {
+                spawnBranch(branchD.branchSprites[counter], true, branchD.branchFalls[counter]);
+            }
+            counter = 0;
+            while (counter < 9)
+            {
+                logD.logSprites[counter].setTexture(logD.logTexture);
+                logD.logSprites[counter].setPosition(103, 111 - (18 * counter));
+                counter++;
+            }
+
             reset = false;
             highScore(score, myfile);
             playerIsDead = false;
@@ -454,6 +566,7 @@ int main()
             scoreText.setString(std::to_string(score));
             scoreText.setPosition(116, 5);
             playerTime = 0;
+            playerPos = false;
             treeMove = false;
             treeMoveOnce = 0;
             branchSpawnPos = 0;
@@ -506,23 +619,30 @@ int main()
                     if (Keyboard::isKeyPressed(Keyboard::D))
                     {
                         playerPos = true;
-                        playerD.playerSprite.setPosition(174, 100);
-                        playerD.playerSprite.setScale(-1, 1);
-                        spriteGravestone.setPosition(143, 121);
                     }
 
                     if (Keyboard::isKeyPressed(Keyboard::A))
                     {
                         playerPos = false;
-                        playerD.playerSprite.setPosition(65, 100);
-                        playerD.playerSprite.setScale(1, 1);
-                        spriteGravestone.setPosition(73, 121);
                     }
 
                     if (Keyboard::isKeyPressed(Keyboard::X))
                     {
                         std::cout << branchD.branchSprites[0].getPosition().y;
                     }
+                }
+
+                //Player position checker
+                if (playerPos == false)
+                {
+                    playerD.playerSprite.setPosition(65, 100);
+                    playerD.playerSprite.setScale(1, 1);
+                    spriteGravestone.setPosition(73, 121);
+                } else
+                {
+                    playerD.playerSprite.setPosition(174, 100);
+                    playerD.playerSprite.setScale(-1, 1);
+                    spriteGravestone.setPosition(143, 121);
                 }
 
                 if (Keyboard::isKeyPressed(Keyboard::R) && reset == true)
@@ -538,6 +658,7 @@ int main()
                     scoreText.setString(std::to_string(score));
                     scoreText.setPosition(116, 5);
                     playerTime = 0;
+                    playerPos = false;
                     treeMove = false;
                     treeMoveOnce = 0;
                     branchSpawnPos = 0;
@@ -553,32 +674,6 @@ int main()
                         logD.logSprites[counter].setPosition(103, 111 - (18 * counter));
                         counter++;
                     }
-                }
-                if (Keyboard::isKeyPressed(Keyboard::C) && reset == true)
-                {
-                    //Make a timer so player can't spam.
-                    reset = false;
-                    //Pick which character.
-                    characterPicker++;
-                    if (characterPicker >= 2)
-                    {
-                        characterPicker = 0;
-                    }
-                    //Change character textures.
-                    if (characterPicker == 0)
-                    {
-                        playerD.playerTextures[0].loadFromFile("graphics/defaultPlayer1.png");
-                        playerD.playerTextures[1].loadFromFile("graphics/defaultPlayer2.png");
-                        playerD.playerTextures[2].loadFromFile("graphics/defaultPlayer3.png");
-                    }
-                    else if (characterPicker == 1)
-                    {
-                        playerD.playerTextures[0].loadFromFile("graphics/winterPlayer1.png");
-                        playerD.playerTextures[1].loadFromFile("graphics/winterPlayer2.png");
-                        playerD.playerTextures[2].loadFromFile("graphics/winterPlayer3.png");
-                    }
-                    //reset the player sprite;
-                    playerD.playerSprite.setTexture(playerD.playerTextures[0]);
                 }
 
                 //Start the game
@@ -771,7 +866,10 @@ int main()
                 }
                 window.draw(spriteMidground);
                 birdSprite.setTextureRect(birdSpriteRect);
-                window.draw(birdSprite);
+                if(mapPicker == 0)
+                {
+                    window.draw(birdSprite);
+                }
                 window.draw(spriteStump);
                 counter = 0;
                 while (counter < 9)
@@ -798,6 +896,192 @@ int main()
                 window.draw(timeBarD.backBarSprite);
                 timeBarSprite.setTextureRect(updatedTimeBarSpriteRect);
                 window.draw(timeBarSprite);
+
+                //Show everything that has been drawn.
+                window.display();
+            }
+        }
+        if (gameState == "Custom") 
+        {
+            //Make a background.
+                //Create a texture to hold a graphic on the GPU.
+            Texture textureBackground;
+            //Load a graphic into the texture.
+            textureBackground.loadFromFile("graphics/customizationBackground.png");
+            //Create a sprite
+            Sprite spriteBackground;
+            //Attach the texture to the sprite.
+            spriteBackground.setTexture(textureBackground);
+            //Set the position of the sprite.
+            spriteBackground.setPosition(0, 0);
+
+            //Make a midground.
+            //Create a texture to hold a graphic on the GPU.
+            Texture textureMidground;
+            //Load a graphic into the texture.
+            textureMidground.loadFromFile("graphics/customizationMidground.png");
+            //Create a sprite
+            Sprite spriteMidground;
+            //Attach the texture to the sprite.
+            spriteMidground.setTexture(textureMidground);
+            //Set the position of the sprite.
+            spriteMidground.setPosition(0, 0);
+
+            //Make a select.
+            //Create a texture to hold a graphic on the GPU.
+            Texture textureSelect;
+            //Load a graphic into the texture.
+            textureSelect.loadFromFile("graphics/selectedCustom.png");
+            //Create a sprite
+            Sprite spriteSelect;
+            //Attach the texture to the sprite.
+            spriteSelect.setTexture(textureSelect);
+            //Set the position of the sprite.
+            spriteSelect.setPosition(52, 24);
+
+            //Make a select.
+            //Create a texture to hold a graphic on the GPU.
+            Texture textureActive;
+            //Load a graphic into the texture.
+            textureActive.loadFromFile("graphics/activeCustom.png");
+            //Create a sprite
+            Sprite spriteActive1;
+            //Attach the texture to the sprite.
+            spriteActive1.setTexture(textureActive);
+            //Set the position of the sprite.
+            spriteActive1.setPosition(52, 24);
+            //Create a sprite
+            Sprite spriteActive2;
+            //Attach the texture to the sprite.
+            spriteActive2.setTexture(textureActive);
+            //Set the position of the sprite.
+            spriteActive2.setPosition(144, 91);
+
+            float resetTime = 0;
+
+            int selectPositionY = 24;
+            int selectPositionX = 52;
+
+            while (window.isOpen() & gameState == "Custom")
+            {
+                if (reset == false)
+                {
+                    resetTime += dt.asSeconds();
+                    if (resetTime >= 0.15f)
+                    {
+                        reset = true;
+                        resetTime = 0.0f;
+                    }
+                }
+
+                sf::Event _event;
+                while (window.pollEvent(_event))
+                {
+                    if (_event.type == sf::Event::Closed) {
+                        window.close();
+                    }
+                }
+
+                if (Keyboard::isKeyPressed(Keyboard::Down) || Keyboard::isKeyPressed(Keyboard::S))
+                {
+                    if (reset == true)
+                    {
+                        reset = false;
+                        selectPositionY += 67;
+                    }
+                }
+                if (Keyboard::isKeyPressed(Keyboard::Up) || Keyboard::isKeyPressed(Keyboard::W))
+                {
+                    if (reset == true)
+                    {
+                        reset = false;
+                        selectPositionY -= 67;
+                    }
+                }
+                if (selectPositionY > 92)
+                {
+                    selectPositionY = 24;
+                }
+                else if (selectPositionY < 23)
+                {
+                    selectPositionY = 91;
+                }
+                
+                if (Keyboard::isKeyPressed(Keyboard::Right) || Keyboard::isKeyPressed(Keyboard::D))
+                {
+                    if (reset == true)
+                    {
+                        reset = false;
+                        selectPositionX += 92;
+                    }
+                }
+                if (Keyboard::isKeyPressed(Keyboard::Left) || Keyboard::isKeyPressed(Keyboard::A))
+                {
+                    if (reset == true)
+                    {
+                        reset = false;
+                        selectPositionX -= 92;
+                    }
+                }
+                if (selectPositionX > 145)
+                {
+                    selectPositionX = 52;
+                }
+                else if (selectPositionX < 51)
+                {
+                    selectPositionX = 144;
+                }
+
+                if (Keyboard::isKeyPressed(Keyboard::Enter))
+                {
+                    if (reset == true)
+                    {
+                        reset = false;
+                        if (selectPositionY == 24 & selectPositionX == 52)
+                        {
+                            spriteActive1.setPosition(52, 24);
+                            characterPicker = 0;
+                        }
+                        if (selectPositionY == 24 & selectPositionX == 144)
+                        {
+                            spriteActive1.setPosition(144, 24);
+                            characterPicker = 1;
+                        }
+                        if (selectPositionY == 91 & selectPositionX == 52)
+                        {
+                            spriteActive2.setPosition(52, 91);
+                            mapPicker = 1;
+                        }
+                        if (selectPositionY == 91 & selectPositionX == 144)
+                        {
+                            spriteActive2.setPosition(144, 91);
+                            mapPicker = 0;
+                        }
+                    }
+                    
+                }
+                if (Keyboard::isKeyPressed(Keyboard::Escape))
+                {
+                    gameState = "Menu";
+                    window.clear();
+                }
+                if (characterPicker == 1)
+                {
+                    spriteActive1.setPosition(144, 24);
+                }
+                if (mapPicker == 1)
+                {
+                    spriteActive2.setPosition(52, 91);
+                }
+                spriteSelect.setPosition(selectPositionX, selectPositionY);
+                //Clear everything from the last frame.
+                window.clear();
+
+                window.draw(spriteBackground);
+                window.draw(spriteMidground);
+                window.draw(spriteActive1);
+                window.draw(spriteActive2);
+                window.draw(spriteSelect);
 
                 //Show everything that has been drawn.
                 window.display();
