@@ -164,7 +164,6 @@ int main()
             bool menuBirdActive = false;
             int menuBirdSpeed = 5;
             float menuBirdTimer = 0;
-            std::cout << "Here";
             //Create a cloud sprite.
             for (counter = 0; counter < 3; counter++)
             {
@@ -356,6 +355,7 @@ int main()
 
             int counter = 0;
             int score = 0;
+            int lastScore = 0;
 
             float maxTime = 1;
             float timeLeft = maxTime;
@@ -399,7 +399,14 @@ int main()
             }
 
             //Create a branch sprite.
-            branchD.branchTexture.loadFromFile("graphics/branch.png");
+            if (mapPicker == 0)
+            {
+                branchD.branchTexture.loadFromFile("graphics/branch.png");
+            }
+            else
+            {
+                branchD.branchTexture.loadFromFile("graphics/branch2.png");
+            }
             for (counter = 0; counter < 4; counter++)
             {
                 branchD.branchSprites[counter].setTexture(branchD.branchTexture);
@@ -504,7 +511,14 @@ int main()
             //Create a texture to hold a graphic on the GPU.
             Texture textureStump;
             //Load a graphic into the texture.
-            textureStump.loadFromFile("graphics/stump.png");
+            if(mapPicker == 0)
+            {
+                textureStump.loadFromFile("graphics/stump.png");
+            }
+            else if (mapPicker == 1)
+            {
+                textureStump.loadFromFile("graphics/stump2.png");
+            }
             //Create a sprite
             Sprite spriteStump;
             //Attach the texture to the sprite.
@@ -535,7 +549,14 @@ int main()
             //Create a texture to hold a graphic on the GPU.
             Texture textureGravestone;
             //Load a graphic into the texture.
-            textureGravestone.loadFromFile("graphics/gravestone.png");
+            if (mapPicker == 0)
+            {
+                textureGravestone.loadFromFile("graphics/gravestone.png");
+            }
+            else if (mapPicker == 1)
+            {
+                textureGravestone.loadFromFile("graphics/gravestone2.png");
+            }
             //Create a sprite
             Sprite spriteGravestone;
             //Attach the texture to the sprite.
@@ -555,7 +576,7 @@ int main()
                 counter++;
             }
 
-            reset = false;
+            reset = true;
             highScore(score, myfile);
             playerIsDead = false;
             playerHit = false;
@@ -597,7 +618,7 @@ int main()
                 }
 
                 //Handle the player input.
-                if (Keyboard::isKeyPressed(Keyboard::Q))
+                if (Keyboard::isKeyPressed(Keyboard::Escape))
                 {
                     highScore(score, myfile);
                     gameState = "Menu";
@@ -677,8 +698,9 @@ int main()
                 }
 
                 //Start the game
-                if (Keyboard::isKeyPressed(Keyboard::Escape))
+                if (Keyboard::isKeyPressed(Keyboard::Q) && reset == true)
                 {
+                    reset = false;
                     dt = clock.restart();
                     paused = !paused;
                 }
@@ -726,7 +748,7 @@ int main()
                             playerD.playerSprite.setTexture(playerD.playerTextures[1]);
                         }
                     }
-                    if (score % 100 == 0 && !score == 0)
+                    if (score % 100 == 0 && !score == 0 && lastScore != score)
                     {
                         scoreAnimation = true;
                     }
@@ -737,6 +759,7 @@ int main()
                         {
                             timeBarD.backBarSprite.setTexture(timeBarD.backBarTextures[0]);
                             scoreAnimationTime = 0;
+                            lastScore = score;
                             scoreAnimation = false;
                         }
                         else if (scoreAnimationTime > 0.6)
@@ -967,7 +990,7 @@ int main()
                 if (reset == false)
                 {
                     resetTime += dt.asSeconds();
-                    if (resetTime >= 0.15f)
+                    if (resetTime >= 0.2f)
                     {
                         reset = true;
                         resetTime = 0.0f;
