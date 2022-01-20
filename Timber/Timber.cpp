@@ -99,6 +99,9 @@ int main()
     void cloudMovement(cloudData&);
     void birdMovement(bool&, int&, Sprite&, IntRect&, float&);
     void textSettingsMenu(Text&, int xCord, int yCord, String textString, sf::Font&);
+    void highScore(int, std::fstream&, struct soundData&);
+
+    std::fstream myfile;
 
     Clock clock;
 
@@ -349,9 +352,6 @@ int main()
             void moveTreeBranch(Sprite&, int, bool&);
             void collisionCheck(Sprite&, bool&);
             void treeMovement(struct logData&, struct branchData, bool&);
-            void highScore(int, std::fstream&, struct soundData&);
-
-            std::fstream myfile;
 
             soundD.musicSounds[0].pause();
             soundD.musicSounds[1].pause();
@@ -639,6 +639,10 @@ int main()
                 //Handle the player input.
                 if (Keyboard::isKeyPressed(Keyboard::Escape))
                 {
+                    if (soundD.SFXSounds[5].getStatus() == false)
+                    {
+                        soundD.SFXSounds[5].play();
+                    }
                     highScore(score, myfile, soundD);
                     gameState = "Menu";
                     window.clear();
@@ -726,17 +730,25 @@ int main()
                 }
 
                 //Start the game
-                if (Keyboard::isKeyPressed(Keyboard::Q) && reset == true)
+                if (Keyboard::isKeyPressed(Keyboard::Q) && reset == true && paused != false)
                 {
                     reset = false;
                     dt = clock.restart();
                     paused = false;
+                    if (soundD.SFXSounds[5].getStatus() == false)
+                    {
+                        soundD.SFXSounds[5].play();
+                    }
                 }
-                if (Keyboard::isKeyPressed(Keyboard::P) && reset == true)
+                if (Keyboard::isKeyPressed(Keyboard::P) && reset == true && paused != true)
                 {
                     reset = false;
                     dt = clock.restart();
                     paused = true;
+                    if (soundD.SFXSounds[5].getStatus() == false)
+                    {
+                        soundD.SFXSounds[5].play();
+                    }
                 }
 
                 //Update the scene.
@@ -822,7 +834,10 @@ int main()
                         }
                         else
                         {
-                            soundD.SFXSounds[1].play();
+                            if(soundD.SFXSounds[1].getStatus() == false)
+                            {
+                                soundD.SFXSounds[1].play();
+                            }
                             timeBarD.backBarSprite.setTexture(timeBarD.backBarTextures[1]);
                         }
                     }
@@ -965,6 +980,7 @@ int main()
         }
         if (gameState == "Custom") 
         {
+            highScore(0, myfile, soundD);
             soundD.musicSounds[0].pause();
             soundD.musicSounds[1].pause();
             soundD.musicSounds[2].pause();
@@ -992,6 +1008,30 @@ int main()
             spriteMidground.setTexture(textureMidground);
             //Set the position of the sprite.
             spriteMidground.setPosition(0, 0);
+
+            //Make a locked character icon.
+            //Create a texture to hold a graphic on the GPU.
+            Texture textureLockedChar;
+            //Load a graphic into the texture.
+            textureLockedChar.loadFromFile("graphics/winterCharacterLocked.png");
+            //Create a sprite
+            Sprite spriteLockedChar;
+            //Attach the texture to the sprite.
+            spriteLockedChar.setTexture(textureLockedChar);
+            //Set the position of the sprite.
+            spriteLockedChar.setPosition(144, 24);
+
+            //Make a locked character icon.
+            //Create a texture to hold a graphic on the GPU.
+            Texture textureLockedMap;
+            //Load a graphic into the texture.
+            textureLockedMap.loadFromFile("graphics/winterMapLocked.png");
+            //Create a sprite
+            Sprite spriteLockedMap;
+            //Attach the texture to the sprite.
+            spriteLockedMap.setTexture(textureLockedMap);
+            //Set the position of the sprite.
+            spriteLockedMap.setPosition(52, 91);
 
             //Make a select.
             //Create a texture to hold a graphic on the GPU.
@@ -1028,8 +1068,19 @@ int main()
             int selectPositionY = 24;
             int selectPositionX = 52;
 
+            bool charUnlocked = false;
+            bool mapUnlocked = false;
+
             while (window.isOpen() & gameState == "Custom")
             {
+                if(globalHighScore >= 150)
+                {
+                    charUnlocked = true;
+                if (globalHighScore >= 250)
+                {
+                    mapUnlocked = true;
+                }
+                }
                 if (reset == false)
                 {
                     resetTime += dt.asSeconds();
@@ -1115,13 +1166,19 @@ int main()
                         }
                         if (selectPositionY == 24 & selectPositionX == 144)
                         {
-                            spriteActive1.setPosition(144, 24);
-                            characterPicker = 1;
+                            if(charUnlocked == true)
+                            {
+                                spriteActive1.setPosition(144, 24);
+                                characterPicker = 1;
+                            }
                         }
                         if (selectPositionY == 91 & selectPositionX == 52)
                         {
-                            spriteActive2.setPosition(52, 91);
-                            mapPicker = 1;
+                            if(mapUnlocked == true)
+                            {
+                                spriteActive2.setPosition(52, 91);
+                                mapPicker = 1;
+                            }
                         }
                         if (selectPositionY == 91 & selectPositionX == 144)
                         {
@@ -1150,6 +1207,14 @@ int main()
 
                 window.draw(spriteBackground);
                 window.draw(spriteMidground);
+                if(charUnlocked == false)
+                {
+                    window.draw(spriteLockedChar);
+                }
+                if (mapUnlocked == false)
+                {
+                    window.draw(spriteLockedMap);
+                }
                 window.draw(spriteActive1);
                 window.draw(spriteActive2);
                 window.draw(spriteSelect);
@@ -1431,13 +1496,13 @@ void highScore(int score, std::fstream& myfile, struct soundData& soundD)
 
     currentHighScore = stoi(highScoreString);
     globalHighScore = currentHighScore;
-    if(currentHighScore>score)
+    if(currentHighScore<score)
     {
-        scoreHigher = false;
+        scoreHigher = true;
     }
     else
     {
-        scoreHigher = true;
+        scoreHigher = false;
     }
 
     if(scoreHigher == true)
