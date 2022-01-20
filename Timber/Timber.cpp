@@ -66,6 +66,13 @@ struct timeBarData
     float timeLeft;
 };
 
+struct soundData
+{
+    sf::SoundBuffer differentSFX[7];
+    sf::Sound SFXSounds[7];
+    sf::Music musicSounds[3];
+};
+
 sf::Vector2f round(const sf::Vector2f vector)
 {
     return sf::Vector2f{ std::round(vector.x), std::round(vector.y) };
@@ -80,6 +87,7 @@ int main()
     //Create and open a window for the game.
     RenderWindow window(vm, "Woodwork", Style::Default);
 
+    struct soundData soundD;
     struct logData logD;
     struct branchData branchD;
     struct cloudData cloudD;
@@ -90,21 +98,44 @@ int main()
 
     void cloudMovement(cloudData&);
     void birdMovement(bool&, int&, Sprite&, IntRect&, float&);
+    void textSettingsMenu(Text&, int xCord, int yCord, String textString, sf::Font&);
 
     Clock clock;
 
     int characterPicker = 0;
     int mapPicker = 0;
 
+    soundD.musicSounds[0].openFromFile("audio/Music/Menu Music - RoccoW - Welcome!.wav");
+    soundD.musicSounds[1].openFromFile("audio/Music/Summer Music - RoccoW - Bleeps Galore.wav");
+    soundD.musicSounds[2].openFromFile("audio/Music/Winter Music - RoccoW - Fuck Sidechain Compression on Gameboy.wav");
+
+    soundD.differentSFX[0].loadFromFile("audio/SFX/Chop - 270325__littlerobotsoundfactory__hit-02.wav");
+    soundD.SFXSounds[0].setBuffer(soundD.differentSFX[0]);
+    soundD.differentSFX[1].loadFromFile("audio/SFX/Milestone Achievement - 270331__littlerobotsoundfactory__jingle-achievement-00.wav");
+    soundD.SFXSounds[1].setBuffer(soundD.differentSFX[1]);
+    soundD.differentSFX[2].loadFromFile("audio/SFX/New Highscore - 270333__littlerobotsoundfactory__jingle-win-00.wav");
+    soundD.SFXSounds[2].setBuffer(soundD.differentSFX[2]);
+    soundD.differentSFX[3].loadFromFile("audio/SFX/Player Move - 270316__littlerobotsoundfactory__open-00.wav");
+    soundD.SFXSounds[3].setBuffer(soundD.differentSFX[3]);
+    soundD.differentSFX[4].loadFromFile("audio/SFX/Menu Switch -270324__littlerobotsoundfactory__menu-navigate-00.wav");
+    soundD.SFXSounds[4].setBuffer(soundD.differentSFX[4]);
+    soundD.differentSFX[5].loadFromFile("audio/SFX/Menu Enter - 270309__littlerobotsoundfactory__craft-00.wav");
+    soundD.SFXSounds[5].setBuffer(soundD.differentSFX[5]);
+    soundD.differentSFX[6].loadFromFile("audio/SFX/Level Lost - 270329__littlerobotsoundfactory__jingle-lose-00.wav");
+    soundD.SFXSounds[6].setBuffer(soundD.differentSFX[6]);
+
     String gameState = "Menu";
     while (window.isOpen())
     {
         if (gameState == "Menu")
         {
+            soundD.musicSounds[0].pause();
+            soundD.musicSounds[1].pause();
+            soundD.musicSounds[2].pause();
+            soundD.musicSounds[0].play();
             int selectPosition = 50;
             int counter = 0;
             float resetTime = 0;
-
             //Make a background.
                 //Create a texture to hold a graphic on the GPU.
             Texture textureBackground;
@@ -188,51 +219,24 @@ int main()
 
             sf::Font font;
             font.loadFromFile("fonts/space-harrier-extended.ttf");
+
             sf::Text title;
-            title.setFont(font);
-            title.setPosition(88, 5);
-            title.setLetterSpacing(0);
-            title.setLineSpacing(0);
-            title.setCharacterSize(80);
-            title.setScale(0.1f, 0.1f);
-            title.setFillColor(sf::Color::Black);
-            title.setString("WOODWORK");
+            textSettingsMenu(title, 88, 5, "WOODWORK", font);
 
             sf::Text play;
-            play.setFont(font);
-            play.setPosition(88, 50);
-            play.setLetterSpacing(0);
-            play.setLineSpacing(0);
-            play.setCharacterSize(80);
-            play.setScale(0.1f, 0.1f);
-            play.setFillColor(sf::Color::Black);
-            play.setString("PLAY");
+            textSettingsMenu(play, 88, 50, "PLAY", font);
 
             sf::Text customize;
-            customize.setFont(font);
-            customize.setPosition(88, 70);
-            customize.setLetterSpacing(0);
-            customize.setLineSpacing(0);
-            customize.setCharacterSize(80);
-            customize.setScale(0.1f, 0.1f);
-            customize.setFillColor(sf::Color::Black);
-            customize.setString("CUSTOMIZE");
+            textSettingsMenu(customize, 88, 70, "CUSTOMIZE", font);
 
             sf::Text quit;
-            quit.setFont(font);
-            quit.setPosition(88, 90);
-            quit.setLetterSpacing(0);
-            quit.setLineSpacing(0);
-            quit.setCharacterSize(80);
-            quit.setScale(0.1f, 0.1f);
-            quit.setFillColor(sf::Color::Black);
-            quit.setString("QUIT");
+            textSettingsMenu(quit, 88, 90, "QUIT", font);
 
-            if (characterPicker == 0) 
-            {
+            if (characterPicker == 0) {
+
                 menuPlayerD.playerTextures[0].loadFromFile("graphics/defaultPlayer1.png");
-            } else
-            {
+            }
+            else {
                 menuPlayerD.playerTextures[0].loadFromFile("graphics/winterPlayer1.png");
             }
             menuPlayerD.playerSprite.setTexture(menuPlayerD.playerTextures[0]);
@@ -253,18 +257,17 @@ int main()
                     if (reset == true)
                     {
                         reset = false;
-                        if (selectPosition == 50)
-                        {
+                        soundD.SFXSounds[5].play();
+                        switch (selectPosition) {
+                        case 50:
                             gameState = "Game";
                             window.clear();
-                        }
-                        if (selectPosition == 70)
-                        {
+                            break;
+                        case 70:
                             gameState = "Custom";
                             window.clear();
-                        }
-                        if (selectPosition == 90)
-                        {
+                            break;
+                        default:
                             window.close();
                         }
                     }
@@ -273,6 +276,7 @@ int main()
                 {
                     if (reset == true)
                     {
+                        soundD.SFXSounds[4].play();
                         reset = false;
                         selectPosition += 20;
                     }
@@ -281,6 +285,7 @@ int main()
                 {
                     if (reset == true)
                     {
+                        soundD.SFXSounds[4].play();
                         reset = false;
                         selectPosition -= 20;
                     }
@@ -302,6 +307,7 @@ int main()
                 {
                     selectPosition = 90;
                 }
+
                 //Manage the clouds / Snow
                 if (mapPicker == 0)
                 {
@@ -343,10 +349,21 @@ int main()
             void moveTreeBranch(Sprite&, int, bool&);
             void collisionCheck(Sprite&, bool&);
             void treeMovement(struct logData&, struct branchData, bool&);
-            void highScore(int, std::fstream&);
+            void highScore(int, std::fstream&, struct soundData&);
 
             std::fstream myfile;
 
+            soundD.musicSounds[0].pause();
+            soundD.musicSounds[1].pause();
+            soundD.musicSounds[2].pause();
+            if(mapPicker == 0)
+            {
+                soundD.musicSounds[1].play();
+            } 
+            if (mapPicker == 1)
+            {
+                soundD.musicSounds[2].play();
+            }
 
             bool playerIsDead = false;
             bool playerHit = false;
@@ -363,7 +380,7 @@ int main()
             float scoreAnimationTime = 0;
             float waitTime = 0;
 
-            highScore(score, myfile);
+            highScore(score, myfile, soundD);
 
             //Making text and loading font.
             sf::Font font;
@@ -577,7 +594,7 @@ int main()
             }
 
             reset = true;
-            highScore(score, myfile);
+            highScore(score, myfile, soundD);
             playerIsDead = false;
             playerHit = false;
             paused = true;
@@ -604,6 +621,8 @@ int main()
                 counter++;
             }
 
+            bool resetYet = false;
+
             //Begins a while loop to stop the program from ending.
             while (window.isOpen() & gameState == "Game")
             {
@@ -612,7 +631,7 @@ int main()
                 while (window.pollEvent(_event))
                 {
                     if (_event.type == sf::Event::Closed) {
-                        highScore(score, myfile);
+                        highScore(score, myfile, soundD);
                         window.close();
                     }
                 }
@@ -620,13 +639,13 @@ int main()
                 //Handle the player input.
                 if (Keyboard::isKeyPressed(Keyboard::Escape))
                 {
-                    highScore(score, myfile);
+                    highScore(score, myfile, soundD);
                     gameState = "Menu";
                     window.clear();
                 }
                 if (Keyboard::isKeyPressed(Keyboard::S))
                 {
-                    highScore(score, myfile);
+                    highScore(score, myfile, soundD);
                 }
 
                 if (!paused && playerIsDead == false)
@@ -639,11 +658,19 @@ int main()
 
                     if (Keyboard::isKeyPressed(Keyboard::D))
                     {
+                        if(soundD.SFXSounds[3].getStatus() == false)
+                        {
+                            soundD.SFXSounds[3].play();
+                        }
                         playerPos = true;
                     }
 
                     if (Keyboard::isKeyPressed(Keyboard::A))
                     {
+                        if (soundD.SFXSounds[3].getStatus() == false)
+                        {
+                            soundD.SFXSounds[3].play();
+                        }
                         playerPos = false;
                     }
 
@@ -669,7 +696,7 @@ int main()
                 if (Keyboard::isKeyPressed(Keyboard::R) && reset == true)
                 {
                     reset = false;
-                    highScore(score, myfile);
+                    highScore(score, myfile, soundD);
                     playerIsDead = false;
                     playerHit = false;
                     paused = true;
@@ -684,6 +711,7 @@ int main()
                     treeMoveOnce = 0;
                     branchSpawnPos = 0;
                     spawnAnotherBranch = true;
+                    resetYet = false;
                     for (counter = 0; counter < 4; counter++)
                     {
                         spawnBranch(branchD.branchSprites[counter], true, branchD.branchFalls[counter]);
@@ -702,7 +730,13 @@ int main()
                 {
                     reset = false;
                     dt = clock.restart();
-                    paused = !paused;
+                    paused = false;
+                }
+                if (Keyboard::isKeyPressed(Keyboard::P) && reset == true)
+                {
+                    reset = false;
+                    dt = clock.restart();
+                    paused = true;
                 }
 
                 //Update the scene.
@@ -738,7 +772,7 @@ int main()
                             playerD.playerSprite.setTexture(playerD.playerTextures[2]);
                             if (treeMoveOnce == 0 && treeMove == false)
                             {
-                                sound.play();
+                                soundD.SFXSounds[0].play();
                                 treeMoveOnce = 1;
                                 treeMove = true;
                             }
@@ -788,7 +822,7 @@ int main()
                         }
                         else
                         {
-                            milestoneSound.play();
+                            soundD.SFXSounds[1].play();
                             timeBarD.backBarSprite.setTexture(timeBarD.backBarTextures[1]);
                         }
                     }
@@ -873,6 +907,11 @@ int main()
                 }
                 if (playerIsDead == true)
                 {
+                    if (soundD.SFXSounds[6].getStatus() == false && resetYet == false)
+                    {
+                        resetYet = true;
+                        soundD.SFXSounds[6].play();
+                    }
                     timeLeft = 0;
                 }
                 float moveTimeBar = fabsf((timeLeft / maxTime) - 1);
@@ -926,6 +965,10 @@ int main()
         }
         if (gameState == "Custom") 
         {
+            soundD.musicSounds[0].pause();
+            soundD.musicSounds[1].pause();
+            soundD.musicSounds[2].pause();
+            soundD.musicSounds[0].play();
             //Make a background.
                 //Create a texture to hold a graphic on the GPU.
             Texture textureBackground;
@@ -1009,6 +1052,7 @@ int main()
                 {
                     if (reset == true)
                     {
+                        soundD.SFXSounds[4].play();
                         reset = false;
                         selectPositionY += 67;
                     }
@@ -1017,6 +1061,7 @@ int main()
                 {
                     if (reset == true)
                     {
+                        soundD.SFXSounds[4].play();
                         reset = false;
                         selectPositionY -= 67;
                     }
@@ -1034,6 +1079,7 @@ int main()
                 {
                     if (reset == true)
                     {
+                        soundD.SFXSounds[4].play();
                         reset = false;
                         selectPositionX += 92;
                     }
@@ -1042,6 +1088,7 @@ int main()
                 {
                     if (reset == true)
                     {
+                        soundD.SFXSounds[4].play();
                         reset = false;
                         selectPositionX -= 92;
                     }
@@ -1059,6 +1106,7 @@ int main()
                 {
                     if (reset == true)
                     {
+                        soundD.SFXSounds[5].play();
                         reset = false;
                         if (selectPositionY == 24 & selectPositionX == 52)
                         {
@@ -1371,7 +1419,7 @@ void treeMovement(struct logData& logD, struct branchData branchD, bool& playerI
         collisionCheck(branchD.branchSprites[counter], playerIsDead);
     }
 }
-void highScore(int score, std::fstream& myfile)
+void highScore(int score, std::fstream& myfile, struct soundData& soundD)
 {
     int currentHighScore;
     std::string highScoreString;
@@ -1394,9 +1442,21 @@ void highScore(int score, std::fstream& myfile)
 
     if(scoreHigher == true)
     {
+        soundD.SFXSounds[2].play();
         myfile.open("highscore.txt");
         myfile << score;
         myfile.close();
         globalHighScore = score;
     }
+}
+void textSettingsMenu(Text& inputText, int xCord, int yCord, String textString, sf::Font& font)
+{
+    inputText.setLetterSpacing(0);
+    inputText.setLineSpacing(0);
+    inputText.setCharacterSize(80);
+    inputText.setScale(0.1f, 0.1f);
+    inputText.setFillColor(sf::Color::Black);
+    inputText.setPosition(xCord, yCord);
+    inputText.setString(textString);
+    inputText.setFont(font);
 }
