@@ -1,6 +1,6 @@
 //Include libaries here.
-#include <fstream>
 #include <sstream>
+#include <fstream>
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <iostream>
@@ -10,15 +10,6 @@
 //Make code easier to write with "using namespace"
 using namespace sf;
 //Time variable
-Time dt;
-bool treeMove = false;
-int treeMoveOnce = 0;
-bool playerPos = false;
-int branchSpawnPos = 0;
-bool spawnAnotherBranch = true;
-bool reset = true;
-std::string line;
-int globalHighScore;
 
 //All my data on logs applied here and called as an instance.
 struct logData
@@ -96,10 +87,10 @@ int main()
     struct playerData menuPlayerD;
     struct timeBarData timeBarD;
 
-    void cloudMovement(cloudData&);
-    void birdMovement(bool&, int&, Sprite&, IntRect&, float&);
+    void cloudMovement(cloudData&, Time);
+    void birdMovement(bool&, int&, Sprite&, IntRect&, float&, Time);
     void textSettingsMenu(Text&, int xCord, int yCord, String textString, sf::Font&);
-    void highScore(int, std::fstream&, struct soundData&);
+    void highScore(int, std::fstream&, struct soundData&, int&);
 
     std::fstream myfile;
 
@@ -107,6 +98,17 @@ int main()
 
     int characterPicker = 0;
     int mapPicker = 0;
+
+    //Time variable
+    Time dt;
+    bool treeMove = false;
+    int treeMoveOnce = 0;
+    bool playerPos = false;
+    int branchSpawnPos = 0;
+    bool spawnAnotherBranch = true;
+    bool reset = true;
+    int globalHighScore;
+
 
     soundD.musicSounds[0].openFromFile("audio/Music/Menu Music - RoccoW - Welcome!.wav");
     soundD.musicSounds[1].openFromFile("audio/Music/Summer Music - RoccoW - Bleeps Galore.wav");
@@ -132,6 +134,7 @@ int main()
     {
         if (gameState == "Menu")
         {
+            //Resumes the menu music and pauses the game music.
             soundD.musicSounds[0].pause();
             soundD.musicSounds[1].pause();
             soundD.musicSounds[2].pause();
@@ -162,6 +165,7 @@ int main()
             //Create a texture to hold a graphic on the GPU.
             Texture textureMidground;
             //Load a graphic into the texture.
+            //Checks the map selected and displays that on the menu.
             if (mapPicker == 0)
             {
                 textureMidground.loadFromFile("graphics/midground.png");
@@ -235,6 +239,7 @@ int main()
             sf::Text quit;
             textSettingsMenu(quit, 88, 90, "QUIT", font);
 
+            //Checks the selected character and displays the character on the menu.
             if (characterPicker == 0) {
 
                 menuPlayerD.playerTextures[0].loadFromFile("graphics/defaultPlayer1.png");
@@ -315,9 +320,9 @@ int main()
                 if (mapPicker == 0)
                 {
                     menuBirdTimer += dt.asSeconds();
-                    birdMovement(menuBirdActive, menuBirdSpeed, menuBirdSprite, menuBirdSpriteRect, menuBirdTimer);
+                    birdMovement(menuBirdActive, menuBirdSpeed, menuBirdSprite, menuBirdSpriteRect, menuBirdTimer, dt);
                 }
-                cloudMovement(menuCloudD);
+                cloudMovement(menuCloudD, dt);
                 spriteMenuSelect.setPosition(0, selectPosition);
                 //Clear everything from the last frame.
                 window.clear();
@@ -347,11 +352,10 @@ int main()
         if (gameState == "Game")
         {
             //All local variables stored here in sections of their data type.
-            void moveTreeTrunk(Sprite&, int);
-            void spawnBranch(Sprite&, bool, bool&);
-            void moveTreeBranch(Sprite&, int, bool&);
-            void collisionCheck(Sprite&, bool&);
-            void treeMovement(struct logData&, struct branchData, bool&);
+            void moveTreeTrunk(Sprite&, int, Time, bool&, int&, bool);
+            void spawnBranch(Sprite&, bool, bool&, int&, bool&);
+            void moveTreeBranch(Sprite&, int, bool&, Time, bool);
+            void collisionCheck(Sprite&, bool&, bool);
 
             soundD.musicSounds[0].pause();
             soundD.musicSounds[1].pause();
@@ -380,7 +384,7 @@ int main()
             float scoreAnimationTime = 0;
             float waitTime = 0;
 
-            highScore(score, myfile, soundD);
+            highScore(score, myfile, soundD, globalHighScore);
 
             //Making text and loading font.
             sf::Font font;
@@ -428,7 +432,7 @@ int main()
             {
                 branchD.branchSprites[counter].setTexture(branchD.branchTexture);
                 branchD.branchFalls[counter] = false;
-                spawnBranch(branchD.branchSprites[counter], true, branchD.branchFalls[counter]);
+                spawnBranch(branchD.branchSprites[counter], true, branchD.branchFalls[counter], branchSpawnPos, spawnAnotherBranch);
             }
 
             //Create a cloud sprite.
@@ -583,7 +587,7 @@ int main()
 
             for (counter = 0; counter < 4; counter++)
             {
-                spawnBranch(branchD.branchSprites[counter], true, branchD.branchFalls[counter]);
+                spawnBranch(branchD.branchSprites[counter], true, branchD.branchFalls[counter], branchSpawnPos, spawnAnotherBranch);
             }
             counter = 0;
             while (counter < 9)
@@ -594,7 +598,7 @@ int main()
             }
 
             reset = true;
-            highScore(score, myfile, soundD);
+            highScore(score, myfile, soundD, globalHighScore);
             playerIsDead = false;
             playerHit = false;
             paused = true;
@@ -611,7 +615,7 @@ int main()
             spawnAnotherBranch = true;
             for (counter = 0; counter < 4; counter++)
             {
-                spawnBranch(branchD.branchSprites[counter], true, branchD.branchFalls[counter]);
+                spawnBranch(branchD.branchSprites[counter], true, branchD.branchFalls[counter], branchSpawnPos, spawnAnotherBranch);
             }
             counter = 0;
             while (counter < 9)
@@ -631,7 +635,7 @@ int main()
                 while (window.pollEvent(_event))
                 {
                     if (_event.type == sf::Event::Closed) {
-                        highScore(score, myfile, soundD);
+                        highScore(score, myfile, soundD, globalHighScore);
                         window.close();
                     }
                 }
@@ -643,13 +647,13 @@ int main()
                     {
                         soundD.SFXSounds[5].play();
                     }
-                    highScore(score, myfile, soundD);
+                    highScore(score, myfile, soundD, globalHighScore);
                     gameState = "Menu";
                     window.clear();
                 }
                 if (Keyboard::isKeyPressed(Keyboard::S))
                 {
-                    highScore(score, myfile, soundD);
+                    highScore(score, myfile, soundD, globalHighScore);
                 }
 
                 if (!paused && playerIsDead == false)
@@ -700,7 +704,7 @@ int main()
                 if (Keyboard::isKeyPressed(Keyboard::R) && reset == true)
                 {
                     reset = false;
-                    highScore(score, myfile, soundD);
+                    highScore(score, myfile, soundD, globalHighScore);
                     playerIsDead = false;
                     playerHit = false;
                     paused = true;
@@ -718,7 +722,7 @@ int main()
                     resetYet = false;
                     for (counter = 0; counter < 4; counter++)
                     {
-                        spawnBranch(branchD.branchSprites[counter], true, branchD.branchFalls[counter]);
+                        spawnBranch(branchD.branchSprites[counter], true, branchD.branchFalls[counter], branchSpawnPos, spawnAnotherBranch);
                     }
                     counter = 0;
                     while (counter < 9)
@@ -874,7 +878,7 @@ int main()
                             {
                                 if (branchD.branchFalls[counter] == true)
                                 {
-                                    spawnBranch(branchD.branchSprites[counter], false, branchD.branchFalls[counter]);
+                                    spawnBranch(branchD.branchSprites[counter], false, branchD.branchFalls[counter], branchSpawnPos, spawnAnotherBranch);
                                     counter = 4;
                                 }
                             }
@@ -893,14 +897,14 @@ int main()
                         counter = 0;
                         while (counter < 9)
                         {
-                            moveTreeTrunk(logD.logSprites[counter], logD.logGoals[counter]);
+                            moveTreeTrunk(logD.logSprites[counter], logD.logGoals[counter], dt, treeMove, treeMoveOnce, playerPos);
                             counter++;
                         }
 
                         for (counter = 0; counter < 4; counter++)
                         {
                             moveTreeBranch(branchD.branchSprites[counter], branchD.branchGoals[counter],
-                                branchD.branchFalls[counter]);
+                                branchD.branchFalls[counter], dt, playerPos);
                         }
                     }
 
@@ -909,16 +913,16 @@ int main()
                         if (branchD.branchFalls[counter] == true)
                         {
                             moveTreeBranch(branchD.branchSprites[counter], branchD.branchGoals[counter],
-                                branchD.branchFalls[counter]);
+                                branchD.branchFalls[counter], dt, playerPos);
                         }
-                        collisionCheck(branchD.branchSprites[counter], playerIsDead);
+                        collisionCheck(branchD.branchSprites[counter], playerIsDead, playerPos);
                     }
                     //treeMovement(logD, branchD, playerIsDead);
                     //Manage the clouds.
-                    cloudMovement(cloudD);
+                    cloudMovement(cloudD, dt);
                     //Manage the bird.
                     birdTimer += dt.asSeconds();
-                    birdMovement(birdActive, birdSpeed, birdSprite, birdSpriteRect, birdTimer);
+                    birdMovement(birdActive, birdSpeed, birdSprite, birdSpriteRect, birdTimer, dt);
                 }
                 if (playerIsDead == true)
                 {
@@ -980,7 +984,10 @@ int main()
         }
         if (gameState == "Custom") 
         {
-            highScore(0, myfile, soundD);
+            //Check to see if the player has made a highscore before.
+            highScore(0, myfile, soundD, globalHighScore);
+
+            //Plays the correct music.
             soundD.musicSounds[0].pause();
             soundD.musicSounds[1].pause();
             soundD.musicSounds[2].pause();
@@ -1071,8 +1078,12 @@ int main()
             bool charUnlocked = false;
             bool mapUnlocked = false;
 
+            //Game state.
             while (window.isOpen() & gameState == "Custom")
             {
+                //Using the highscore we loaded from the start.
+                //Checks for any score above 150 or 250.
+                //Unlocks the character and / or map depending on highscore.
                 if(globalHighScore >= 150)
                 {
                     charUnlocked = true;
@@ -1081,6 +1092,8 @@ int main()
                     mapUnlocked = true;
                 }
                 }
+
+                //Reset the time, makes sure intereactions with keyboard are not to quick.
                 if (reset == false)
                 {
                     resetTime += dt.asSeconds();
@@ -1091,6 +1104,7 @@ int main()
                     }
                 }
 
+                //Allows us to use the minimize and exit game button on top right of the window.
                 sf::Event _event;
                 while (window.pollEvent(_event))
                 {
@@ -1099,6 +1113,7 @@ int main()
                     }
                 }
 
+                //Allows the user to change the selected icon based on which key is pressed.
                 if (Keyboard::isKeyPressed(Keyboard::Down) || Keyboard::isKeyPressed(Keyboard::S))
                 {
                     if (reset == true)
@@ -1153,6 +1168,7 @@ int main()
                     selectPositionX = 144;
                 }
 
+                //Allows us to select the current icon the player is hovering over on.
                 if (Keyboard::isKeyPressed(Keyboard::Enter))
                 {
                     if (reset == true)
@@ -1188,6 +1204,8 @@ int main()
                     }
                     
                 }
+
+                //Allows us to exit back to main menu.
                 if (Keyboard::isKeyPressed(Keyboard::Escape))
                 {
                     gameState = "Menu";
@@ -1225,7 +1243,7 @@ int main()
         }
     }
 }
-void moveTreeBranch(Sprite& part, int endGoal, bool& activeFall)
+void moveTreeBranch(Sprite& part, int endGoal, bool& activeFall, Time dt, bool playerPos)
 {
     float fallSpeed = 150;
     if (part.getPosition().y < endGoal || activeFall == true)
@@ -1247,7 +1265,7 @@ void moveTreeBranch(Sprite& part, int endGoal, bool& activeFall)
         }
     }
 }
-void moveTreeTrunk(Sprite& part, int endGoal)
+void moveTreeTrunk(Sprite& part, int endGoal, Time dt, bool& treeMove, int& treeMoveOnce, bool playerPos)
 {
     float fallSpeed = 150;
     if (part.getPosition().y < endGoal)
@@ -1284,7 +1302,7 @@ void moveTreeTrunk(Sprite& part, int endGoal)
         }
     }
 }
-void spawnBranch(Sprite& part, bool firstTime, bool& whichBranch)
+void spawnBranch(Sprite& part, bool firstTime, bool& whichBranch, int& branchSpawnPos, bool& spawnAnotherBranch)
 {
     int randomiser;
     if (firstTime == true)
@@ -1339,7 +1357,7 @@ void spawnBranch(Sprite& part, bool firstTime, bool& whichBranch)
         }
     }
 }
-void collisionCheck(Sprite& branch, bool& playerDead)
+void collisionCheck(Sprite& branch, bool& playerDead, bool playerPos)
 {
     if (branch.getPosition().y <= 114 && branch.getPosition().y >= 108)
     {
@@ -1354,7 +1372,7 @@ void collisionCheck(Sprite& branch, bool& playerDead)
         }
     }
 }
-void cloudMovement(struct cloudData& cloudD)
+void cloudMovement(struct cloudData& cloudD, Time dt)
 {
     int counter;
     for (counter = 0; counter < 3; counter++)
@@ -1381,7 +1399,7 @@ void cloudMovement(struct cloudData& cloudD)
         }
     }
 }
-void birdMovement(bool& birdActive, int& birdSpeed, Sprite& birdSprite, IntRect& birdSpriteRect, float& birdTimer)
+void birdMovement(bool& birdActive, int& birdSpeed, Sprite& birdSprite, IntRect& birdSpriteRect, float& birdTimer, Time dt)
 {
     if (!birdActive)
     {
@@ -1432,71 +1450,27 @@ void birdMovement(bool& birdActive, int& birdSpeed, Sprite& birdSprite, IntRect&
         birdSpriteRect.left = 0;
     }
 }
-void treeMovement(struct logData& logD, struct branchData branchD, bool& playerIsDead)
-{
-    int counter;
-    if (treeMove == true)
-    {
-        if (treeMoveOnce == 1)
-        {
-            counter = 0;
-            while (counter < 9)
-            {
-                logD.logGoals[counter] = logD.logSprites[counter].getPosition().y + 18;
-                counter++;
-            }
-            for (counter = 0; counter < 4; counter++)
-            {
-                branchD.branchGoals[counter] = branchD.branchSprites[counter].getPosition().y + 18;
-            }
-            for (counter = 0; counter < 4; counter++)
-            {
-                if (branchD.branchFalls[counter] == true)
-                {
-                    spawnBranch(branchD.branchSprites[counter], false, branchD.branchFalls[counter]);
-                    counter = 4;
-                }
-            }
-            treeMoveOnce = 2;
-        }
-        counter = 0;
-        while (counter < 9)
-        {
-            moveTreeTrunk(logD.logSprites[counter], logD.logGoals[counter]);
-            counter++;
-        }
 
-        for (counter = 0; counter < 4; counter++)
-        {
-            moveTreeBranch(branchD.branchSprites[counter], branchD.branchGoals[counter],
-                branchD.branchFalls[counter]);
-        }
-    }
-
-    for (counter = 0; counter < 4; counter++)
-    {
-        if (branchD.branchFalls[counter] == true)
-        {
-            std::cout << " and the end goal is ";
-            moveTreeBranch(branchD.branchSprites[counter], branchD.branchGoals[counter],
-                branchD.branchFalls[counter]);
-        }
-        collisionCheck(branchD.branchSprites[counter], playerIsDead);
-    }
-}
-void highScore(int score, std::fstream& myfile, struct soundData& soundD)
+void highScore(int score, std::fstream& myfile, struct soundData& soundD, int& globalHighScore)
 {
     int currentHighScore;
     std::string highScoreString;
     bool scoreHigher;
 
-    myfile.open("highscore.txt");
+    myfile.open("bin/data/highscore.txt", std::ios_base::in | std::ios_base::out);
+    if (!myfile)
+    {
+        std::cout << "file not open";
+    }
     getline(myfile, highScoreString);
     myfile.close();
+    std::cout << highScoreString;
 
     currentHighScore = stoi(highScoreString);
     globalHighScore = currentHighScore;
-    if(currentHighScore<score)
+    std::cout << currentHighScore;
+
+    if (currentHighScore < score)
     {
         scoreHigher = true;
     }
@@ -1505,10 +1479,14 @@ void highScore(int score, std::fstream& myfile, struct soundData& soundD)
         scoreHigher = false;
     }
 
-    if(scoreHigher == true)
+    if (scoreHigher == true)
     {
         soundD.SFXSounds[2].play();
-        myfile.open("highscore.txt");
+        myfile.open("bin/data/highscore.txt", std::ios_base::in | std::ios_base::out);
+        if (!myfile)
+        {
+            std::cout << "file not open";
+        }
         myfile << score;
         myfile.close();
         globalHighScore = score;
