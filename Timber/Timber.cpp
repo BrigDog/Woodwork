@@ -7,18 +7,20 @@
 #include <list>
 #include <string>  
 #include <cmath>
+#include <sqlite3.h>
+#include <stdio.h>
+
 //Make code easier to write with "using namespace"
 using namespace sf;
-//Time variable
+using namespace std;
 
-//All my data on logs applied here and called as an instance.
+//All the structure data sets are made here.
 struct logData
 {
     Texture logTexture;
     Sprite logSprites[9];
     int logGoals[9];
 };
-//All my data on branches applied here and called as an instance.
 struct branchData
 {
     Texture branchTexture;
@@ -26,7 +28,6 @@ struct branchData
     int branchGoals[4];
     bool branchFalls[4];
 };
-//All my data on clouds applied here and called as an instance.
 struct cloudData
 {
     Texture cloudTextures[3];
@@ -34,21 +35,18 @@ struct cloudData
     bool cloudActive[3];
     float cloudSpeed[3];
 };
-
 struct playerData
 {
     Texture playerTextures[3];
     Sprite playerSprite;
     int whichSkin;
 };
-
 struct numberData
 {
     int score;
     Texture numberTextures[10];
     std::list<Sprite> digitSprites;
 };
-
 struct timeBarData
 {
     Texture backBarTextures[5];
@@ -56,7 +54,6 @@ struct timeBarData
     Sprite backBarSprite;
     float timeLeft;
 };
-
 struct soundData
 {
     sf::SoundBuffer differentSFX[7];
@@ -78,6 +75,7 @@ int main()
     //Create and open a window for the game.
     RenderWindow window(vm, "Woodwork", Style::Default);
 
+    //Making an instance of each structure and a name to go along with it.
     struct soundData soundD;
     struct logData logD;
     struct branchData branchD;
@@ -87,29 +85,34 @@ int main()
     struct playerData menuPlayerD;
     struct timeBarData timeBarD;
 
+    //Initializing all the void methods.
     void cloudMovement(cloudData&, Time);
     void birdMovement(bool&, int&, Sprite&, IntRect&, float&, Time);
     void textSettingsMenu(Text&, int xCord, int yCord, String textString, sf::Font&);
     void highScore(int, std::fstream&, struct soundData&, int&);
 
+    //All variables used throughout the game.
     std::fstream myfile;
 
     Clock clock;
 
     int characterPicker = 0;
     int mapPicker = 0;
-
-    //Time variable
-    Time dt;
-    bool treeMove = false;
     int treeMoveOnce = 0;
-    bool playerPos = false;
     int branchSpawnPos = 0;
-    bool spawnAnotherBranch = true;
-    bool reset = true;
     int globalHighScore;
 
+    Time dt;
 
+    bool treeMove = false;   
+    bool playerPos = false;
+    bool spawnAnotherBranch = true;
+    bool reset = true;
+
+    //Creating the inital gamestate.
+    String gameState = "Menu";
+
+    //Creating all the sounds and music of the game.
     soundD.musicSounds[0].openFromFile("audio/Music/Menu Music - RoccoW - Welcome!.wav");
     soundD.musicSounds[1].openFromFile("audio/Music/Summer Music - RoccoW - Bleeps Galore.wav");
     soundD.musicSounds[2].openFromFile("audio/Music/Winter Music - RoccoW - Fuck Sidechain Compression on Gameboy.wav");
@@ -129,21 +132,28 @@ int main()
     soundD.differentSFX[6].loadFromFile("audio/SFX/Level Lost - 270329__littlerobotsoundfactory__jingle-lose-00.wav");
     soundD.SFXSounds[6].setBuffer(soundD.differentSFX[6]);
 
-    String gameState = "Menu";
     while (window.isOpen())
     {
         if (gameState == "Menu")
         {
+            //All the variables used in the main menu state.
+            int selectPosition = 50;
+            int counter = 0;
+            int menuBirdSpeed = 5;
+
+            float resetTime = 0;
+            float menuBirdTimer = 0;
+
+            bool menuBirdActive = false;
+            bool cloud1Active;
+
             //Resumes the menu music and pauses the game music.
             soundD.musicSounds[0].pause();
             soundD.musicSounds[1].pause();
             soundD.musicSounds[2].pause();
             soundD.musicSounds[0].play();
-            int selectPosition = 50;
-            int counter = 0;
-            float resetTime = 0;
             //Make a background.
-                //Create a texture to hold a graphic on the GPU.
+            //Create a texture to hold a graphic on the GPU.
             Texture textureBackground;
             //Load a graphic into the texture.
             if (mapPicker == 0)
@@ -199,9 +209,7 @@ int main()
             sf::IntRect menuBirdSpriteRect(0, 0, 10, 14);
             sf::Sprite menuBirdSprite(menuBirdTexture, menuBirdSpriteRect);
             menuBirdSprite.setPosition(240, 0);
-            bool menuBirdActive = false;
-            int menuBirdSpeed = 5;
-            float menuBirdTimer = 0;
+
             //Create a cloud sprite.
             for (counter = 0; counter < 3; counter++)
             {
@@ -218,12 +226,13 @@ int main()
                 }
                 menuCloudD.cloudSprites[counter].setTexture(menuCloudD.cloudTextures[counter]);
                 branchD.branchFalls[counter] = false;
-                bool cloud1Active = true;
+                cloud1Active = true;
                 menuCloudD.cloudActive[counter] = false;
                 menuCloudD.cloudSprites[counter].setPosition(-74, 0);
             }
             counter = 0;
 
+            //Creates all the text that appears on the screen.
             sf::Font font;
             font.loadFromFile("fonts/space-harrier-extended.ttf");
 
@@ -252,7 +261,11 @@ int main()
 
             while (window.isOpen() & gameState == "Menu")
             {
+                //Resets the time from how much time the last frame took.
                 dt = clock.restart();
+
+                //Allows the user the quit the game using the cross on the window.
+                //Also allows the user to maximize the window.
                 sf::Event _event;
                 while (window.pollEvent(_event))
                 {
@@ -260,6 +273,9 @@ int main()
                         window.close();
                     }
                 }
+
+                //Manages all the keyboard inputs.
+                //Allows the player to enter the different gamestates.
                 if (Keyboard::isKeyPressed(Keyboard::Enter))
                 {
                     if (reset == true)
@@ -280,6 +296,8 @@ int main()
                         }
                     }
                 }
+
+                //Allows the player to move the select icon downwards.
                 if (Keyboard::isKeyPressed(Keyboard::Down) || Keyboard::isKeyPressed(Keyboard::S))
                 {
                     if (reset == true)
@@ -289,6 +307,8 @@ int main()
                         selectPosition += 20;
                     }
                 }
+
+                //Allows the player to move the select icon upwards.
                 if (Keyboard::isKeyPressed(Keyboard::Up) || Keyboard::isKeyPressed(Keyboard::W))
                 {
                     if (reset == true)
@@ -298,6 +318,8 @@ int main()
                         selectPosition -= 20;
                     }
                 }
+
+                //Reset is used so the player cannot spam controls.
                 if (reset == false)
                 {
                     resetTime += dt.asSeconds();
@@ -307,6 +329,9 @@ int main()
                         resetTime = 0.0f;
                     }
                 }
+
+                //Resets the UI of the select icon,
+                //so if the player spams down it will reset to the top of the page.
                 if (selectPosition > 90)
                 {
                     selectPosition = 50;
@@ -316,17 +341,21 @@ int main()
                     selectPosition = 90;
                 }
 
-                //Manage the clouds / Snow
+                //Manage the clouds and any other map specific animation.
                 if (mapPicker == 0)
                 {
                     menuBirdTimer += dt.asSeconds();
                     birdMovement(menuBirdActive, menuBirdSpeed, menuBirdSprite, menuBirdSpriteRect, menuBirdTimer, dt);
                 }
                 cloudMovement(menuCloudD, dt);
+
+                //Sets the position of the current select UI.
                 spriteMenuSelect.setPosition(0, selectPosition);
+
                 //Clear everything from the last frame.
                 window.clear();
 
+                //Draws everything for this frame.
                 window.draw(spriteBackground);
                 for (counter = 0; counter < 3; counter++)
                 {
@@ -1070,6 +1099,7 @@ int main()
             //Set the position of the sprite.
             spriteActive2.setPosition(144, 91);
 
+            //All the varibles used in the customiztion menu.
             float resetTime = 0;
 
             int selectPositionY = 24;
@@ -1223,6 +1253,7 @@ int main()
                 //Clear everything from the last frame.
                 window.clear();
 
+                //Draws everything to the current frame.
                 window.draw(spriteBackground);
                 window.draw(spriteMidground);
                 if(charUnlocked == false)
@@ -1359,6 +1390,7 @@ void spawnBranch(Sprite& part, bool firstTime, bool& whichBranch, int& branchSpa
 }
 void collisionCheck(Sprite& branch, bool& playerDead, bool playerPos)
 {
+    //Checks if the branch is on the same y level as the character sprite.
     if (branch.getPosition().y <= 114 && branch.getPosition().y >= 108)
     {
         
@@ -1421,6 +1453,7 @@ void birdMovement(bool& birdActive, int& birdSpeed, Sprite& birdSprite, IntRect&
             birdActive = false;
         }
     }
+    //Allows me to animate the bird based on how much time has passed.
     if (birdTimer > 0.6)
     {
         birdTimer = 0;
@@ -1450,7 +1483,6 @@ void birdMovement(bool& birdActive, int& birdSpeed, Sprite& birdSprite, IntRect&
         birdSpriteRect.left = 0;
     }
 }
-
 void highScore(int score, std::fstream& myfile, struct soundData& soundD, int& globalHighScore)
 {
     int currentHighScore;
@@ -1494,6 +1526,7 @@ void highScore(int score, std::fstream& myfile, struct soundData& soundD, int& g
 }
 void textSettingsMenu(Text& inputText, int xCord, int yCord, String textString, sf::Font& font)
 {
+    //Allows me to make all the text the same throughout the game.
     inputText.setLetterSpacing(0);
     inputText.setLineSpacing(0);
     inputText.setCharacterSize(80);
@@ -1502,4 +1535,16 @@ void textSettingsMenu(Text& inputText, int xCord, int yCord, String textString, 
     inputText.setPosition(xCord, yCord);
     inputText.setString(textString);
     inputText.setFont(font);
+}
+
+static int createDB(const char* s)
+{
+    sqlite3* DB;
+
+    int exit = 0;
+    exit = sqlite3_open(s, &DB);
+
+    sqlite3_close(DB);
+
+    return 0;
 }
