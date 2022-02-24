@@ -14,6 +14,8 @@
 using namespace sf;
 using namespace std;
 
+int globalHighScore = 0;
+
 //All the structure data sets are made here.
 struct logData
 {
@@ -61,6 +63,16 @@ struct soundData
     sf::Music musicSounds[3];
 };
 
+string Score = "20";
+
+static int createDB(const char* s);
+static int createTable(const char* s);
+static int deleteData(const char* s);
+static int insertData(const char* s, int score);
+static int updateData(const char* s);
+static int selectData(const char* s, int& newScore);
+static int callback(void* NotUsed, int argc, char** argv, char** azColName);
+
 sf::Vector2f round(const sf::Vector2f vector)
 {
     return sf::Vector2f{ std::round(vector.x), std::round(vector.y) };
@@ -69,6 +81,7 @@ sf::Vector2f round(const sf::Vector2f vector)
 //This is where the game starts from.
 int main()
 {
+    const char* dir = R"(c:\Database\HIGHSCORES.db)";
     //Create a video mode object.
     VideoMode vm(240, 160);
 
@@ -89,7 +102,6 @@ int main()
     void cloudMovement(cloudData&, Time);
     void birdMovement(bool&, int&, Sprite&, IntRect&, float&, Time);
     void textSettingsMenu(Text&, int xCord, int yCord, String textString, sf::Font&);
-    void highScore(int, std::fstream&, struct soundData&, int&);
 
     //All variables used throughout the game.
     std::fstream myfile;
@@ -100,7 +112,6 @@ int main()
     int mapPicker = 0;
     int treeMoveOnce = 0;
     int branchSpawnPos = 0;
-    int globalHighScore;
 
     Time dt;
 
@@ -131,7 +142,6 @@ int main()
     soundD.SFXSounds[5].setBuffer(soundD.differentSFX[5]);
     soundD.differentSFX[6].loadFromFile("audio/SFX/Level Lost - 270329__littlerobotsoundfactory__jingle-lose-00.wav");
     soundD.SFXSounds[6].setBuffer(soundD.differentSFX[6]);
-
     while (window.isOpen())
     {
         if (gameState == "Menu")
@@ -407,13 +417,20 @@ int main()
             int score = 0;
             int lastScore = 0;
 
-            float maxTime = 1;
+            float maxTime;
+            if (mapPicker == 0)
+            {
+                maxTime = 1.2;
+            } else
+            {
+                maxTime = 0.8;
+            }
             float timeLeft = maxTime;
             float playerTime = 0;
             float scoreAnimationTime = 0;
             float waitTime = 0;
 
-            highScore(score, myfile, soundD, globalHighScore);
+            selectData(dir, globalHighScore);
 
             //Making text and loading font.
             sf::Font font;
@@ -627,7 +644,6 @@ int main()
             }
 
             reset = true;
-            highScore(score, myfile, soundD, globalHighScore);
             playerIsDead = false;
             playerHit = false;
             paused = true;
@@ -664,7 +680,12 @@ int main()
                 while (window.pollEvent(_event))
                 {
                     if (_event.type == sf::Event::Closed) {
-                        highScore(score, myfile, soundD, globalHighScore);
+                        if (score > globalHighScore)
+                        {
+                            globalHighScore = score;
+                            deleteData(dir);
+                            insertData(dir, score);
+                        }
                         window.close();
                     }
                 }
@@ -676,13 +697,23 @@ int main()
                     {
                         soundD.SFXSounds[5].play();
                     }
-                    highScore(score, myfile, soundD, globalHighScore);
+                    if (score > globalHighScore)
+                    {
+                        globalHighScore = score;
+                        deleteData(dir);
+                        insertData(dir, score);
+                    }
                     gameState = "Menu";
                     window.clear();
                 }
                 if (Keyboard::isKeyPressed(Keyboard::S))
                 {
-                    highScore(score, myfile, soundD, globalHighScore);
+                    if (score > globalHighScore)
+                    {
+                        globalHighScore = score;
+                        deleteData(dir);
+                        insertData(dir, score);
+                    }
                 }
 
                 if (!paused && playerIsDead == false)
@@ -733,7 +764,12 @@ int main()
                 if (Keyboard::isKeyPressed(Keyboard::R) && reset == true)
                 {
                     reset = false;
-                    highScore(score, myfile, soundD, globalHighScore);
+                    if (score > globalHighScore)
+                    {
+                        globalHighScore = score;
+                        deleteData(dir);
+                        insertData(dir, score);
+                    }
                     playerIsDead = false;
                     playerHit = false;
                     paused = true;
@@ -1014,7 +1050,7 @@ int main()
         if (gameState == "Custom") 
         {
             //Check to see if the player has made a highscore before.
-            highScore(0, myfile, soundD, globalHighScore);
+            selectData(dir, globalHighScore);
 
             //Plays the correct music.
             soundD.musicSounds[0].pause();
@@ -1483,47 +1519,6 @@ void birdMovement(bool& birdActive, int& birdSpeed, Sprite& birdSprite, IntRect&
         birdSpriteRect.left = 0;
     }
 }
-void highScore(int score, std::fstream& myfile, struct soundData& soundD, int& globalHighScore)
-{
-    int currentHighScore;
-    std::string highScoreString;
-    bool scoreHigher;
-
-    myfile.open("bin/data/highscore.txt", std::ios_base::in | std::ios_base::out);
-    if (!myfile)
-    {
-        std::cout << "file not open";
-    }
-    getline(myfile, highScoreString);
-    myfile.close();
-    std::cout << highScoreString;
-
-    currentHighScore = stoi(highScoreString);
-    globalHighScore = currentHighScore;
-    std::cout << currentHighScore;
-
-    if (currentHighScore < score)
-    {
-        scoreHigher = true;
-    }
-    else
-    {
-        scoreHigher = false;
-    }
-
-    if (scoreHigher == true)
-    {
-        soundD.SFXSounds[2].play();
-        myfile.open("bin/data/highscore.txt", std::ios_base::in | std::ios_base::out);
-        if (!myfile)
-        {
-            std::cout << "file not open";
-        }
-        myfile << score;
-        myfile.close();
-        globalHighScore = score;
-    }
-}
 void textSettingsMenu(Text& inputText, int xCord, int yCord, String textString, sf::Font& font)
 {
     //Allows me to make all the text the same throughout the game.
@@ -1536,7 +1531,6 @@ void textSettingsMenu(Text& inputText, int xCord, int yCord, String textString, 
     inputText.setString(textString);
     inputText.setFont(font);
 }
-
 static int createDB(const char* s)
 {
     sqlite3* DB;
@@ -1547,4 +1541,149 @@ static int createDB(const char* s)
     sqlite3_close(DB);
 
     return 0;
+}
+static int createTable(const char* s)
+{
+    sqlite3* DB;
+    char* messageError;
+
+    string sql = "CREATE TABLE IF NOT EXISTS HIGHSCORES("
+        "ID INTEGER PRIMARY KEY AUTOINCREMENT, "
+        "USERNAME      TEXT NOT NULL, "
+        "HIGHSCORE       INT  NOT NULL);";
+
+    try
+    {
+        int exit = 0;
+        exit = sqlite3_open(s, &DB);
+        /* An open database, SQL to be evaluated, Callback function, 1st argument to callback, Error msg written here */
+        exit = sqlite3_exec(DB, sql.c_str(), NULL, 0, &messageError);
+        if (exit != SQLITE_OK) {
+            cerr << "Error in createTable function." << endl;
+            sqlite3_free(messageError);
+        }
+        else
+            cout << "Table created Successfully" << endl;
+        sqlite3_close(DB);
+    }
+    catch (const exception& e)
+    {
+        cerr << e.what();
+    }
+
+    return 0;
+}
+static int insertData(const char* s, int score)
+{
+    int newScore = 0;
+    newScore = score;
+    string Username = "User";
+    sqlite3* DB;
+    char* messageError;
+
+    string sql(
+        "INSERT INTO HIGHSCORES (USERNAME, HIGHSCORE) VALUES('" + Username + "', '" + std::to_string(newScore) + "');");
+
+    int exit = sqlite3_open(s, &DB);
+
+    /* An open database, SQL to be evaluated, Callback function, 1st argument to callback, Error msg written here */
+    exit = sqlite3_exec(DB, sql.c_str(), NULL, 0, &messageError);
+    if (exit != SQLITE_OK) {
+        cerr << "Error in insertData function." << endl;
+        sqlite3_free(messageError);
+    }
+    else
+        cout << "Records inserted Successfully!" << endl;
+
+    return 0;
+}
+static int updateData(const char* s)
+{
+    sqlite3* DB;
+    char* messageError;
+
+    string sql("UPDATE HIGHSCORES SET HIGHSCORE = 50 WHERE USERNAME = 'Josh'");
+
+    int exit = sqlite3_open(s, &DB);
+    /* An open database, SQL to be evaluated, Callback function, 1st argument to callback, Error msg written here */
+    exit = sqlite3_exec(DB, sql.c_str(), NULL, 0, &messageError);
+    if (exit != SQLITE_OK) {
+        cerr << "Error in updateData function." << endl;
+        sqlite3_free(messageError);
+    }
+    else
+        cout << "Records updated Successfully!" << endl;
+
+    return 0;
+}
+static int deleteData(const char* s)
+{
+    sqlite3* DB;
+    char* messageError;
+
+    string sql = "DELETE FROM HIGHSCORES";
+
+    int exit = sqlite3_open(s, &DB);
+    /* An open database, SQL to be evaluated, Callback function, 1st argument to callback, Error msg written here */
+    exit = sqlite3_exec(DB, sql.c_str(), callback, NULL, &messageError);
+    if (exit != SQLITE_OK) {
+        cerr << "Error in deleteData function." << endl;
+        sqlite3_free(messageError);
+    }
+    else
+        cout << "Records deleted Successfully!" << endl;
+
+    return 0;
+}
+static int selectData(const char* s, int& newScore)
+{
+    int value = 0;
+    sqlite3* DB;
+    char* messageError;
+
+    string sql = "SELECT * FROM HIGHSCORES;";
+    int exit = sqlite3_open(s, &DB);
+    cout << exit;
+    newScore = exit;
+
+
+
+    /* An open database, SQL to be evaluated, Callback function, 1st argument to callback, Error msg written here*/
+    exit = sqlite3_exec(DB, sql.c_str(), callback, NULL, &messageError);
+    cout << exit;
+    if (exit != SQLITE_OK) {
+        if (exit != 4) {
+            cerr << "Error in selectData function." << endl;
+            sqlite3_free(messageError);
+        }
+        else {
+
+            cout << "Records selected Successfully!" << endl;
+        }
+    }
+    else {
+
+        cout << "Records selected Successfully!" << endl;
+    }
+    return 0;
+}
+
+// retrieve contents of database used by selectData()
+/* argc: holds the number of results, argv: holds each value in array, azColName: holds each column returned in array, */
+static int callback(void* NotUsed, int argc, char** argv, char** azColName)
+{
+    string value;
+    int newValue;
+    for (int i = 0; i < argc; i++) {
+        // column name and value
+        cout << azColName[i] << ": " << argv[i] << endl;
+        if (azColName[i] == azColName[2])
+        {
+            value += argv[i];
+        }
+    }
+    cout << endl;
+    newValue = stoi(value);
+    globalHighScore = newValue;
+    return newValue;
 }
